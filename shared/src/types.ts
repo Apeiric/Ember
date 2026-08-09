@@ -640,6 +640,12 @@ export interface AssessRequest {
    */
   fastVerdict?: boolean;
   /**
+   * Exact coordinates, when the person dropped a pin or shared their device
+   * position instead of typing an address. When present, geocoding is skipped
+   * entirely — the point IS the truth, and `address` becomes a display label.
+   */
+  location?: LatLng;
+  /**
    * Free-text situation reports gathered so far, oldest first. Each is parsed by
    * Claude into structured facts, geometrically verified, and folded into the
    * danger field before the judge runs.

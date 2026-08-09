@@ -38,6 +38,7 @@ import { ResponderView } from './components/ResponderView';
 import { RouteList } from './components/RouteList';
 import { RoutePlan } from './components/RoutePlan';
 import { SettingsView } from './components/SettingsView';
+import { SpeakBrief } from './components/SpeakBrief';
 import { TracePanel } from './components/TracePanel';
 import { VerdictHero } from './components/VerdictHero';
 
@@ -71,6 +72,14 @@ export default function App() {
     setScenarioId(nextScenarioId);
     setTab('escape');
     void run({ address: next, profile: activeProfile, scenarioId: nextScenarioId, forceOffline: offline });
+  }
+
+  /** Device GPS or a dropped pin — the point is the truth, no geocoding. */
+  function handleLocate(location: { lat: number; lng: number }, label?: string) {
+    const name = label ?? 'My location';
+    setAddress(name);
+    setTab('escape');
+    void run({ address: name, location, profile: activeProfile, scenarioId, forceOffline: offline });
   }
 
   /**
@@ -147,6 +156,7 @@ export default function App() {
             setThreeD={setThreeD}
             whyNot={whyNot}
             onSubmit={handleSubmit}
+            onLocate={handleLocate}
             onSelectMember={handleSelectMember}
             onReport={(t) => addReport(t)}
             goPeople={() => setTab('people')}
@@ -214,6 +224,7 @@ function EscapeTab({
   setThreeD,
   whyNot,
   onSubmit,
+  onLocate,
   onSelectMember,
   onReport,
   goPeople,
@@ -229,6 +240,7 @@ function EscapeTab({
   setThreeD: (v: boolean) => void;
   whyNot: { name: string; reason: string } | null;
   onSubmit: (address: string, scenarioId?: string) => void;
+  onLocate: (location: { lat: number; lng: number }, label?: string) => void;
   onSelectMember: (id: string) => void;
   onReport: (text: string) => void;
   goPeople: () => void;
@@ -249,6 +261,9 @@ function EscapeTab({
               members={household.members}
               activeId={household.activeId}
               onSelectMember={onSelectMember}
+              onProbe={(p) =>
+                onLocate(p, `Dropped pin (${p.lat.toFixed(4)}, ${p.lng.toFixed(4)})`)
+              }
             />
             {data && (
               <button
@@ -298,6 +313,17 @@ function EscapeTab({
             </div>
           )}
 
+          {/* The brief, spoken — for the person already backing out. */}
+          {data && (
+            <SpeakBrief
+              verdict={data.verdict}
+              recommended={data.recommended}
+              tuning={data.tuning}
+              essentials={active?.essentials}
+              whyNot={whyNot}
+            />
+          )}
+
           {!data && !error && (loading ? (
             <AssessingCard />
           ) : (
@@ -330,6 +356,7 @@ function EscapeTab({
           <div className="panel p-4">
             <AddressInput
               onSubmit={onSubmit}
+              onLocate={(loc) => onLocate(loc)}
               loading={loading}
               scenarios={scenarios}
               initialValue={address}

@@ -64,9 +64,11 @@ interface Props {
   members?: FamilyMember[];
   activeId?: string | null;
   onSelectMember?: (id: string) => void;
+  /** "What if I were HERE?" — tap any spot to assess an escape from it. */
+  onProbe?: (p: LatLng) => void;
 }
 
-export function MapView({ data, members = [], activeId = null, onSelectMember }: Props) {
+export function MapView({ data, members = [], activeId = null, onSelectMember, onProbe }: Props) {
   const container = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [ready, setReady] = useState(false);
@@ -74,6 +76,8 @@ export function MapView({ data, members = [], activeId = null, onSelectMember }:
   // Keep the latest handler without re-registering map listeners.
   const selectRef = useRef(onSelectMember);
   selectRef.current = onSelectMember;
+  const probeRef = useRef(onProbe);
+  probeRef.current = onProbe;
 
   // ── Initialise once ─────────────────────────────────────────────────────
   useEffect(() => {
@@ -108,6 +112,25 @@ export function MapView({ data, members = [], activeId = null, onSelectMember }:
         });
         instance.on('mouseleave', 'members-dot', () => {
           instance.getCanvas().style.cursor = '';
+        });
+
+        // Tap an empty spot → offer to assess an escape FROM THERE. Confirm
+        // via a popup rather than running immediately: a 15-second pipeline
+        // run is too expensive for an accidental pan-tap.
+        instance.on('click', (e) => {
+          const onPin = instance.queryRenderedFeatures(e.point, { layers: ['members-dot'] });
+          if (onPin.length > 0 || !probeRef.current) return;
+          const { lng, lat } = e.lngLat;
+          const popup = new mapboxgl.Popup({ closeButton: false, offset: 10, className: 'ember-probe' })
+            .setLngLat(e.lngLat)
+            .setHTML(
+              `<button id="ember-probe-btn" style="all:unset;cursor:pointer;font:700 11px/1.2 system-ui;letter-spacing:.08em;text-transform:uppercase;color:#ffb076;padding:2px 4px">Check escape from here →</button>`,
+            )
+            .addTo(instance);
+          document.getElementById('ember-probe-btn')?.addEventListener('click', () => {
+            popup.remove();
+            probeRef.current?.({ lat, lng });
+          });
         });
 
         setReady(true);

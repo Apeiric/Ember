@@ -10,6 +10,8 @@ import { useEffect, useState, type FormEvent } from 'react';
 import type { ScenarioSummary } from '@ember/shared';
 
 interface Props {
+  /** Device position chosen instead of an address. Coordinates skip geocoding. */
+  onLocate?: (location: { lat: number; lng: number }) => void;
   /**
    * `scenarioId` is set ONLY by the demo buttons. Typing an address leaves it
    * undefined, which runs the pipeline fully live. Without this the demo
@@ -23,8 +25,34 @@ interface Props {
   scenarios: ScenarioSummary[];
 }
 
-export function AddressInput({ onSubmit, loading, initialValue = '', scenarios }: Props) {
+export function AddressInput({ onSubmit, onLocate, loading, initialValue = '', scenarios }: Props) {
   const [value, setValue] = useState(initialValue);
+  const [geoError, setGeoError] = useState<string | null>(null);
+  const [locating, setLocating] = useState(false);
+
+  function useMyLocation() {
+    if (!navigator.geolocation) {
+      setGeoError('This browser has no location service.');
+      return;
+    }
+    setGeoError(null);
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLocating(false);
+        onLocate?.({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+      },
+      (err) => {
+        setLocating(false);
+        setGeoError(
+          err.code === err.PERMISSION_DENIED
+            ? 'Location permission denied — type an address instead.'
+            : 'Could not get a position — type an address instead.',
+        );
+      },
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 },
+    );
+  }
 
   /**
    * Selecting someone in the household changes the address out from under this
@@ -62,16 +90,35 @@ export function AddressInput({ onSubmit, loading, initialValue = '', scenarios }
         )}
       </div>
 
-      <button
-        type="submit"
-        disabled={loading || value.trim().length < 3}
-        className="relative w-full overflow-hidden rounded-xl bg-ember-600 px-4 py-3.5 text-sm font-bold uppercase tracking-[0.1em] text-white transition-all hover:bg-ember-500 disabled:cursor-not-allowed disabled:opacity-40"
-      >
-        {loading ? 'Assessing…' : 'Find my way out'}
-        {loading && (
-          <span className="absolute inset-y-0 left-0 w-1/3 animate-sweep bg-white/20" />
+      <div className="flex gap-2">
+        <button
+          type="submit"
+          disabled={loading || value.trim().length < 3}
+          className="relative min-w-0 flex-1 overflow-hidden rounded-xl bg-ember-600 px-4 py-3.5 text-sm font-bold uppercase tracking-[0.1em] text-white transition-all hover:bg-ember-500 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          {loading ? 'Assessing…' : 'Find my way out'}
+          {loading && (
+            <span className="absolute inset-y-0 left-0 w-1/3 animate-sweep bg-white/20" />
+          )}
+        </button>
+        {onLocate && (
+          <button
+            type="button"
+            onClick={useMyLocation}
+            disabled={loading || locating}
+            title="Use my location"
+            aria-label="Use my location"
+            className="shrink-0 rounded-xl border border-ash-600 bg-ash-850 px-3.5 text-lg transition-colors hover:border-ember-500 hover:text-ember-300 disabled:opacity-40"
+          >
+            {locating ? (
+              <span className="block h-4 w-4 animate-spin rounded-full border-2 border-ember-500/30 border-t-ember-400" />
+            ) : (
+              '📍'
+            )}
+          </button>
         )}
-      </button>
+      </div>
+      {geoError && <p className="text-[0.68rem] text-alarm-400">{geoError}</p>}
 
       {scenarios.length > 0 && (
         <div className="flex flex-wrap gap-1.5 pt-0.5">

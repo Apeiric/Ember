@@ -19,6 +19,7 @@
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
+import { useEffect, useMemo, useState } from 'react';
 import type { Decision, RouteVerdict, ScoredRoute } from '@ember/shared';
 
 interface Props {
@@ -51,6 +52,18 @@ export function VerdictHero({ verdict, recommended, compact = false }: Props) {
   const say = SAY[verdict.decision];
   const tone = TONE[verdict.decision];
   const minutes = verdict.leaveWithinMinutes;
+
+  // The deadline is REAL TIME: it started aging the moment the verdict landed.
+  // A static "24 minutes" still says 24 five minutes later; this one ticks.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const anchor = useMemo(() => Date.now(), [verdict]);
+  const [nowMs, setNowMs] = useState(anchor);
+  useEffect(() => {
+    const t = window.setInterval(() => setNowMs(Date.now()), 1000);
+    return () => window.clearInterval(t);
+  }, []);
+  const remainingSec =
+    minutes === null ? null : Math.max(0, Math.round(minutes * 60 - (nowMs - anchor) / 1000));
   const canGo = verdict.decision !== 'SHELTER_IN_PLACE' && verdict.direction !== null;
 
   return (
@@ -103,17 +116,15 @@ export function VerdictHero({ verdict, recommended, compact = false }: Props) {
           <div className="text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-white/55">
             Time to go
           </div>
-          {minutes === null ? (
+          {remainingSec === null ? (
             <p className="mt-2 text-sm font-semibold text-white/85">No deadline yet</p>
-          ) : minutes <= 0 ? (
+          ) : remainingSec <= 0 ? (
             <div className="mt-1 text-4xl font-black uppercase leading-none text-white">Now</div>
           ) : (
             <div className="mt-1 flex items-baseline gap-1.5">
               <span className="text-5xl font-black leading-none tabular-nums text-white">
-                {minutes}
-              </span>
-              <span className="text-base font-bold text-white/85">
-                {minutes === 1 ? 'minute' : 'minutes'}
+                {Math.floor(remainingSec / 60)}
+                <span className="text-3xl">:{String(remainingSec % 60).padStart(2, '0')}</span>
               </span>
             </div>
           )}

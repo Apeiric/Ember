@@ -28,6 +28,8 @@ export interface RunOptions {
   reports?: string[];
   /** Skip the LLM prose pass — instant deterministic re-judgement. */
   fastVerdict?: boolean;
+  /** Exact coordinates (device GPS or a dropped pin). Skips geocoding. */
+  location?: { lat: number; lng: number };
 }
 
 export function useAssessment() {
@@ -62,6 +64,7 @@ export function useAssessment() {
           forceOffline: options.forceOffline,
           reports: options.reports,
           fastVerdict: options.fastVerdict,
+          location: options.location,
         },
         controller.signal,
       );

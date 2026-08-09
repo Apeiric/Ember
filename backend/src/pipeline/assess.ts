@@ -43,10 +43,35 @@ export async function runAssessment(req: ParsedAssessRequest): Promise<AssessRes
   const t0 = performance.now();
 
   // ── 1. LOCATE ───────────────────────────────────────────────────────────
-  const geo = await geocodeAddress(req.address, trace, {
-    forceOffline: req.forceOffline,
-    scenarioId: req.scenarioId,
-  });
+  // A dropped pin or device GPS fix is already the truth — geocoding a label
+  // like "My location" would only invent a different answer.
+  const geo = req.location
+    ? {
+        data: {
+          formattedAddress: req.address?.trim() || 'Dropped location',
+          location: req.location,
+        },
+        provenance: {
+          source: 'live' as const,
+          provider: 'Device / dropped-pin coordinates',
+          fetchedAt: new Date().toISOString(),
+          note: 'Coordinates supplied directly; geocoding skipped.',
+        },
+      }
+    : await geocodeAddress(req.address, trace, {
+        forceOffline: req.forceOffline,
+        scenarioId: req.scenarioId,
+      });
+  if (req.location) {
+    trace.record({
+      name: 'geocode',
+      status: 'ok',
+      ms: 0,
+      source: 'live',
+      provider: 'Device / dropped-pin coordinates',
+      note: 'Exact position supplied by the user.',
+    });
+  }
   const origin = geo.data.location;
 
   // An address that matched a canned scenario pins the rest of the pipeline to
