@@ -62,7 +62,7 @@ export function FieldReportInput({ onSubmit, loading, reports, impact }: Props) 
           rows={3}
           disabled={loading}
           placeholder="the fire jumped Sunset, it's blocked, heavy smoke on the east side"
-          className="w-full resize-none rounded-xl border border-ash-700 bg-ash-850 px-3 py-2.5 text-[0.85rem] leading-snug text-ash-100 placeholder:text-ash-500 outline-none transition-colors focus:border-ember-500 focus:ring-1 focus:ring-ember-500/40 disabled:opacity-50"
+          className="w-full resize-none rounded-xl border border-ash-700 bg-ash-850 px-3 py-2.5 text-[0.85rem] leading-snug text-ash-100 placeholder:text-ash-500 outline-none transition-colors focus:border-ash-300 focus:ring-1 focus:ring-ash-300/30 disabled:opacity-50"
         />
         <div className="flex flex-wrap gap-1.5">
           {EXAMPLES.map((ex) => (
@@ -71,7 +71,7 @@ export function FieldReportInput({ onSubmit, loading, reports, impact }: Props) 
               type="button"
               disabled={loading}
               onClick={() => setText(ex.text)}
-              className="rounded-lg border border-ash-700 bg-ash-850 px-2.5 py-1 text-[0.68rem] text-ash-300 transition-colors hover:border-ember-500/50 hover:text-ember-300 disabled:opacity-40"
+              className="rounded-lg border border-ash-700 bg-ash-850 px-2.5 py-1 text-[0.68rem] text-ash-300 transition-colors hover:border-ash-400 hover:text-ash-100 disabled:opacity-40"
             >
               {ex.label}
             </button>
@@ -79,7 +79,7 @@ export function FieldReportInput({ onSubmit, loading, reports, impact }: Props) 
           <button
             type="submit"
             disabled={loading || text.trim().length < 4}
-            className="ml-auto rounded-lg bg-ember-600 px-3.5 py-1.5 text-[0.72rem] font-bold uppercase tracking-wider text-white transition-colors hover:bg-ember-500 disabled:opacity-40"
+            className="ml-auto rounded-lg bg-ash-100 px-3.5 py-1.5 text-[0.72rem] font-bold uppercase tracking-wider text-ash-950 transition-colors hover:bg-white disabled:opacity-40"
           >
             {loading ? 'Reading…' : 'Send update'}
           </button>

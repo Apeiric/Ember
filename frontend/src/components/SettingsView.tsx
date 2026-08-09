@@ -33,7 +33,7 @@ export function SettingsView({ scenarios, offline, onOffline, onRunScenario }: P
               key={s.id}
               type="button"
               onClick={() => onRunScenario(s)}
-              className="w-full rounded-xl border border-ash-600 bg-ash-900 px-3.5 py-2.5 text-left transition-colors hover:border-ember-500/60"
+              className="w-full rounded-xl border border-ash-600 bg-ash-900 px-3.5 py-2.5 text-left transition-colors hover:border-ash-400"
             >
               <div className="flex items-baseline justify-between gap-2">
                 <span className="text-[0.85rem] font-bold text-ash-50">{s.name}</span>
@@ -61,7 +61,7 @@ export function SettingsView({ scenarios, offline, onOffline, onRunScenario }: P
             type="checkbox"
             checked={offline}
             onChange={(e) => onOffline(e.target.checked)}
-            className="h-5 w-5 accent-ember-500"
+            className="h-5 w-5 accent-ash-200"
           />
         </label>
       </section>

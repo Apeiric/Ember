@@ -81,11 +81,11 @@ export function AddressInput({ onSubmit, onLocate, loading, initialValue = '', s
           placeholder="1500 Palisades Drive, Pacific Palisades"
           autoComplete="street-address"
           spellCheck={false}
-          className="w-full rounded-xl border border-ash-700 bg-ash-850 px-4 py-3 pr-12 text-[0.95rem] text-ash-100 placeholder:text-ash-500 outline-none transition-colors focus:border-ember-500 focus:ring-1 focus:ring-ember-500/40"
+          className="w-full rounded-xl border border-ash-700 bg-ash-850 px-4 py-3 pr-12 text-[0.95rem] text-ash-100 placeholder:text-ash-500 outline-none transition-colors focus:border-ash-300 focus:ring-1 focus:ring-ash-300/30"
         />
         {loading && (
           <span className="absolute right-4 top-1/2 -translate-y-1/2">
-            <span className="block h-4 w-4 animate-spin rounded-full border-2 border-ember-500/30 border-t-ember-400" />
+            <span className="block h-4 w-4 animate-spin rounded-full border-2 border-ash-400/30 border-t-ash-100" />
           </span>
         )}
       </div>
@@ -94,11 +94,11 @@ export function AddressInput({ onSubmit, onLocate, loading, initialValue = '', s
         <button
           type="submit"
           disabled={loading || value.trim().length < 3}
-          className="relative min-w-0 flex-1 overflow-hidden rounded-xl bg-ember-600 px-4 py-3.5 text-sm font-bold uppercase tracking-[0.1em] text-white transition-all hover:bg-ember-500 disabled:cursor-not-allowed disabled:opacity-40"
+          className="relative min-w-0 flex-1 overflow-hidden rounded-xl bg-ash-100 px-4 py-3.5 text-sm font-bold uppercase tracking-[0.1em] text-ash-950 transition-all hover:bg-white disabled:cursor-not-allowed disabled:opacity-40"
         >
           {loading ? 'Assessing…' : 'Find my way out'}
           {loading && (
-            <span className="absolute inset-y-0 left-0 w-1/3 animate-sweep bg-white/20" />
+            <span className="absolute inset-y-0 left-0 w-1/3 animate-sweep bg-black/10" />
           )}
         </button>
         {onLocate && (
@@ -108,10 +108,10 @@ export function AddressInput({ onSubmit, onLocate, loading, initialValue = '', s
             disabled={loading || locating}
             title="Use my location"
             aria-label="Use my location"
-            className="shrink-0 rounded-xl border border-ash-600 bg-ash-850 px-3.5 text-lg transition-colors hover:border-ember-500 hover:text-ember-300 disabled:opacity-40"
+            className="shrink-0 rounded-xl border border-ash-600 bg-ash-850 px-3.5 text-lg transition-colors hover:border-ash-400 hover:text-ash-100 disabled:opacity-40"
           >
             {locating ? (
-              <span className="block h-4 w-4 animate-spin rounded-full border-2 border-ember-500/30 border-t-ember-400" />
+              <span className="block h-4 w-4 animate-spin rounded-full border-2 border-ash-400/30 border-t-ash-100" />
             ) : (
               '📍'
             )}
@@ -134,7 +134,7 @@ export function AddressInput({ onSubmit, onLocate, loading, initialValue = '', s
                 setValue(s.demoAddress);
                 onSubmit(s.demoAddress, s.id);
               }}
-              className="rounded-lg border border-ash-700 bg-ash-850 px-2.5 py-1 text-[0.7rem] text-ash-200 transition-colors hover:border-ember-500/50 hover:text-ember-300 disabled:opacity-40"
+              className="rounded-lg border border-ash-700 bg-ash-850 px-2.5 py-1 text-[0.7rem] text-ash-200 transition-colors hover:border-ash-400 hover:text-ash-100 disabled:opacity-40"
             >
               {s.name}
             </button>

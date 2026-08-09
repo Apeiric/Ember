@@ -33,7 +33,7 @@ export function ResponderView() {
   if (!data) {
     return (
       <div className="flex items-center gap-3 p-2 text-sm text-ash-300">
-        <span className="h-4 w-4 animate-spin rounded-full border-2 border-ember-500/30 border-t-ember-400" />
+        <span className="h-4 w-4 animate-spin rounded-full border-2 border-ash-400/30 border-t-ash-100" />
         Computing escape windows for the sector…
       </div>
     );
@@ -92,7 +92,7 @@ function TriageRow({ rank, row }: { rank: number; row: FamilyMemberAssessment })
     >
       <div
         className={`flex w-12 shrink-0 items-center justify-center text-xl font-black ${
-          cutOff ? 'bg-alarm-600 text-white' : rank === 1 ? 'bg-ember-600 text-white' : 'bg-ash-800 text-ash-200'
+          cutOff ? 'bg-alarm-600 text-white' : rank === 1 ? 'bg-ash-100 text-ash-950' : 'bg-ash-800 text-ash-200'
         }`}
       >
         {rank}

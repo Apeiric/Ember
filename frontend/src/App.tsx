@@ -26,6 +26,7 @@ import type { MemberEdit } from './hooks/useHousehold';
 import type { ScenarioSummary } from '@ember/shared';
 import { useAssessment } from './hooks/useAssessment';
 import { useHousehold } from './hooks/useHousehold';
+import { useLiveFamily } from './hooks/useLiveFamily';
 import { fetchScenarios } from './lib/api';
 import { AddressInput } from './components/AddressInput';
 import { AssessingCard } from './components/AssessingCard';
@@ -33,12 +34,12 @@ import { FamilyBoard } from './components/FamilyView';
 import { FieldReportInput } from './components/FieldReportInput';
 import { HazardSummary } from './components/HazardSummary';
 import { Household } from './components/Household';
+import { LiveFamily } from './components/LiveFamily';
 import { MapView } from './components/MapView';
 import { ResponderView } from './components/ResponderView';
 import { RouteList } from './components/RouteList';
 import { RoutePlan } from './components/RoutePlan';
 import { SettingsView } from './components/SettingsView';
-import { SpeakBrief } from './components/SpeakBrief';
 import { TracePanel } from './components/TracePanel';
 import { VerdictHero } from './components/VerdictHero';
 
@@ -57,6 +58,9 @@ export default function App() {
   const [tab, setTab] = useState<Tab>('escape');
   const [threeD, setThreeD] = useState(false);
   const [offline, setOffline] = useState(false);
+  const live = useLiveFamily((positions) => {
+    for (const [id, pos] of Object.entries(positions)) household.setLocation(id, pos);
+  });
 
   useEffect(() => {
     void fetchScenarios().then(setScenarios);
@@ -160,6 +164,7 @@ export default function App() {
             onSelectMember={handleSelectMember}
             onReport={(t) => addReport(t)}
             goPeople={() => setTab('people')}
+            live={live}
           />
         )}
 
@@ -228,6 +233,7 @@ function EscapeTab({
   onSelectMember,
   onReport,
   goPeople,
+  live,
 }: {
   data: ReturnType<typeof useAssessment>['data'];
   error: ReturnType<typeof useAssessment>['error'];
@@ -244,6 +250,7 @@ function EscapeTab({
   onSelectMember: (id: string) => void;
   onReport: (text: string) => void;
   goPeople: () => void;
+  live: ReturnType<typeof useLiveFamily>;
 }) {
   const active = household.active;
   return (
@@ -269,7 +276,7 @@ function EscapeTab({
               <button
                 type="button"
                 onClick={() => setThreeD(true)}
-                className="absolute right-3 top-3 z-10 rounded-lg border border-ash-600/80 bg-ash-900/85 px-3 py-1.5 text-xs font-semibold text-ash-200 backdrop-blur transition-colors hover:border-ember-500 hover:text-ember-300"
+                className="absolute right-3 top-3 z-10 rounded-lg border border-ash-600/80 bg-ash-900/85 px-3 py-1.5 text-xs font-semibold text-ash-200 backdrop-blur transition-colors hover:border-ash-400 hover:text-ash-100"
               >
                 Understand it in 3D
               </button>
@@ -313,14 +320,16 @@ function EscapeTab({
             </div>
           )}
 
-          {/* The brief, spoken — for the person already backing out. */}
-          {data && (
-            <SpeakBrief
-              verdict={data.verdict}
-              recommended={data.recommended}
-              tuning={data.tuning}
-              essentials={active?.essentials}
-              whyNot={whyNot}
+
+          {data && scenarioId === 'palisades-2025' && (
+            <LiveFamily
+              running={live.running}
+              rows={live.rows}
+              events={live.events}
+              assignment={live.assignment}
+              clockSec={live.clockSec}
+              onStart={() => void live.start()}
+              onStop={live.stop}
             />
           )}
 
@@ -336,7 +345,7 @@ function EscapeTab({
             <button
               type="button"
               onClick={goPeople}
-              className="flex w-full items-center justify-between rounded-2xl border border-ash-600/80 bg-ash-900/95 px-4 py-2.5 text-left transition-colors hover:border-ember-500/60"
+              className="flex w-full items-center justify-between rounded-2xl border border-ash-600/80 bg-ash-900/95 px-4 py-2.5 text-left transition-colors hover:border-ash-400"
             >
               <span className="text-[0.78rem] text-ash-200">
                 Assessing for{' '}
@@ -347,7 +356,7 @@ function EscapeTab({
                   {active.profile.hasCar ? '' : ' · no car'}
                 </span>
               </span>
-              <span className="text-[0.66rem] font-bold uppercase tracking-wider text-ember-300">
+              <span className="text-[0.66rem] font-bold uppercase tracking-wider text-ash-300">
                 Change →
               </span>
             </button>
@@ -417,7 +426,7 @@ function EscapeTab({
 function Wordmark({ scenarioId }: { scenarioId?: string }) {
   return (
     <header className="flex items-baseline gap-2 px-1 pt-1">
-      <span className="text-xl font-black tracking-tight text-ember-500">EMBER</span>
+      <span className="text-xl font-black tracking-tight text-ash-50">EMBER<span className="text-ember-500">.</span></span>
       <span
         title={
           scenarioId
@@ -426,7 +435,7 @@ function Wordmark({ scenarioId }: { scenarioId?: string }) {
         }
         className={`rounded-full border px-2 py-0.5 text-[0.55rem] font-bold uppercase tracking-[0.12em] ${
           scenarioId
-            ? 'border-ember-500/40 bg-ember-500/10 text-ember-300'
+            ? 'border-ash-500 bg-ash-800 text-ash-200'
             : 'border-safe-500/30 bg-safe-500/10 text-safe-400'
         }`}
       >
@@ -487,12 +496,12 @@ function TabBar({
               onClick={() => onTab(t.id)}
               aria-current={active ? 'page' : undefined}
               className={`relative flex flex-1 flex-col items-center gap-0.5 px-2 pb-2.5 pt-2 text-[0.62rem] font-bold uppercase tracking-wider transition-colors ${
-                active ? 'text-ember-400' : 'text-ash-300 hover:text-ash-100'
+                active ? 'text-ash-50' : 'text-ash-400 hover:text-ash-200'
               }`}
             >
               {/* active indicator on the top edge, where a thumb can see it */}
               <span
-                className={`absolute inset-x-6 top-0 h-0.5 rounded-full ${active ? 'bg-ember-500' : 'bg-transparent'}`}
+                className={`absolute inset-x-6 top-0 h-0.5 rounded-full ${active ? 'bg-ash-100' : 'bg-transparent'}`}
               />
               <span className="text-base leading-none">{t.glyph}</span>
               {t.label}
@@ -531,7 +540,7 @@ function Onboard({
           ['Follow one green line', 'and see exactly why we refused the others'],
         ].map(([head, sub], i) => (
           <li key={i} className="flex gap-2.5">
-            <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-ember-600 text-[0.65rem] font-bold text-white">
+            <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-ash-100 text-[0.65rem] font-bold text-ash-950">
               {i + 1}
             </span>
             <span className="text-[0.8rem] leading-snug text-ash-200">
@@ -545,7 +554,7 @@ function Onboard({
         <button
           type="button"
           onClick={goPeople}
-          className="rounded-xl bg-ember-600 px-3.5 py-2 text-[0.72rem] font-bold uppercase tracking-wider text-white transition-colors hover:bg-ember-500"
+          className="rounded-xl bg-ash-100 px-3.5 py-2 text-[0.72rem] font-bold uppercase tracking-wider text-ash-950 transition-colors hover:bg-white"
         >
           Set up your household
         </button>
@@ -553,7 +562,7 @@ function Onboard({
           <button
             type="button"
             onClick={() => onDemo(scenarios[0]!.demoAddress, scenarios[0]!.id)}
-            className="rounded-xl border border-ash-600 px-3.5 py-2 text-[0.72rem] font-bold uppercase tracking-wider text-ash-200 transition-colors hover:border-ember-500 hover:text-ember-300"
+            className="rounded-xl border border-ash-600 px-3.5 py-2 text-[0.72rem] font-bold uppercase tracking-wider text-ash-200 transition-colors hover:border-ash-400 hover:text-ash-100"
           >
             See the {scenarios[0].name} demo
           </button>

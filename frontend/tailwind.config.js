@@ -14,19 +14,22 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Near-black base — the map is the bright thing, not the chrome.
+        // Neutral soft-black base — no blue cast, no vibe. Color is reserved
+        // for meaning: ember/alarm = danger, safe = safety, caution = caution.
+        // Chrome is monochrome; the emergency is what gets to be loud.
         ash: {
-          950: '#08090c',
-          900: '#0d0f14',
-          850: '#12151c',
-          800: '#181c25',
-          700: '#242a37',
-          600: '#333b4d',
-          500: '#4a5468',
-          400: '#6b7689',
-          300: '#95a0b3',
-          200: '#c3cad6',
-          100: '#e6eaf0',
+          950: '#0a0a0b',
+          900: '#121214',
+          850: '#161618',
+          800: '#1d1d20',
+          700: '#27272b',
+          600: '#35353a',
+          500: '#4b4b52',
+          400: '#6f6f78',
+          300: '#9c9ca4',
+          200: '#c9c9ce',
+          100: '#ececef',
+          50: '#f7f7f8',
         },
         ember: {
           50: '#fff5ed',

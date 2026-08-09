@@ -50,7 +50,7 @@ export function AssessingCard() {
                 {done ? (
                   <span className="text-[0.9rem] font-bold text-safe-400">✓</span>
                 ) : now ? (
-                  <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-ember-500/30 border-t-ember-400" />
+                  <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-ash-400/30 border-t-ash-100" />
                 ) : (
                   <span className="h-1.5 w-1.5 rounded-full bg-ash-600" />
                 )}

@@ -55,7 +55,7 @@ export function RoutePlan({ recommended, tuning, essentials, whyNot }: Props) {
         {/* Step zero: prep. The fire does not wait while you pack. */}
         <PlanRow
           marker="●"
-          markerClass="text-ember-400"
+          markerClass="text-ash-200"
           title={`Get out the door`}
           detail={`${tuning.prepMinutes} min — ${tuning.label.toLowerCase()}`}
           eta={`min 0–${tuning.prepMinutes}`}

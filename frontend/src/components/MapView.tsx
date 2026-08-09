@@ -705,7 +705,7 @@ function installLayers(map: mapboxgl.Map) {
     source: SRC.members,
     paint: {
       'circle-radius': ['case', ['==', ['get', 'active'], 1], 11, 8.5],
-      'circle-color': ['case', ['==', ['get', 'active'], 1], '#ff6b0a', '#343c4d'],
+      'circle-color': ['case', ['==', ['get', 'active'], 1], '#ececef', '#3a3a40'],
       'circle-stroke-color': '#ffffff',
       'circle-stroke-width': 2,
     },
@@ -720,7 +720,9 @@ function installLayers(map: mapboxgl.Map) {
       'text-size': 10.5,
       'text-allow-overlap': true,
     },
-    paint: { 'text-color': '#ffffff' },
+    paint: {
+      'text-color': ['case', ['==', ['get', 'active'], 1], '#0a0a0b', '#ffffff'],
+    },
   });
   map.addLayer({
     id: 'members-name',

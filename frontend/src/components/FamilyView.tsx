@@ -52,7 +52,7 @@ export function FamilyBoard() {
   if (!data) {
     return (
       <div className="flex items-center gap-3 p-2 text-sm text-ash-300">
-        <span className="h-4 w-4 animate-spin rounded-full border-2 border-ember-500/30 border-t-ember-400" />
+        <span className="h-4 w-4 animate-spin rounded-full border-2 border-ash-400/30 border-t-ash-100" />
         Working out everyone’s verdict…
       </div>
     );
@@ -61,14 +61,14 @@ export function FamilyBoard() {
   return (
     <>
       {/* ── WHAT TO DO FIRST ─────────────────────────────────────────── */}
-      <section className="rounded-2xl border border-ember-500/30 bg-ember-500/[0.07] p-4">
-        <h2 className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-ember-300">
+      <section className="rounded-2xl border border-ash-600 bg-ash-900 p-4">
+        <h2 className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-ash-200">
           Do this in order
         </h2>
         <ol className="mt-2 space-y-2">
           {data.coordination.map((line, i) => (
             <li key={i} className="flex gap-2.5 text-[0.85rem] leading-snug text-ash-100">
-              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-ember-600 text-[0.65rem] font-bold text-white">
+              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-ash-100 text-[0.65rem] font-bold text-ash-950">
                 {i + 1}
               </span>
               {line}

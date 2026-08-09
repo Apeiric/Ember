@@ -83,7 +83,7 @@ export function Household({ members, activeId, onSelect, onUpdate, onAdd, onRemo
       <button
         type="button"
         onClick={() => setEditingId(onAdd())}
-        className="mt-2 w-full rounded-xl border border-dashed border-ash-500 px-3 py-2 text-[0.72rem] font-semibold text-ash-300 transition-colors hover:border-ember-500/60 hover:text-ember-300"
+        className="mt-2 w-full rounded-xl border border-dashed border-ash-500 px-3 py-2 text-[0.72rem] font-semibold text-ash-300 transition-colors hover:border-ash-400 hover:text-ash-100"
       >
         + Add someone
       </button>
@@ -108,7 +108,7 @@ function MemberRow({
     <div
       className={`flex items-stretch overflow-hidden rounded-xl border transition-all ${
         active
-          ? 'border-ember-500 bg-ember-500/[0.12] shadow-[0_0_0_1px_rgba(255,107,10,0.3)]'
+          ? 'border-ash-200 bg-ash-100/[0.06] shadow-[0_0_0_1px_rgba(236,236,239,0.25)]'
           : 'border-ash-700 bg-ash-850 hover:border-ash-600'
       }`}
     >
@@ -120,10 +120,10 @@ function MemberRow({
       >
         <div className="flex items-center gap-2">
           <span
-            className={`h-2 w-2 shrink-0 rounded-full ${active ? 'bg-ember-400' : 'bg-ash-600'}`}
+            className={`h-2 w-2 shrink-0 rounded-full ${active ? 'bg-ash-100' : 'bg-ash-600'}`}
           />
           <span
-            className={`truncate text-[0.85rem] font-semibold ${active ? 'text-ember-100' : 'text-ash-200'}`}
+            className={`truncate text-[0.85rem] font-semibold ${active ? 'text-ash-50' : 'text-ash-200'}`}
           >
             {member.name}
           </span>
@@ -160,7 +160,7 @@ function MemberRow({
         type="button"
         onClick={onEdit}
         aria-label={`Edit ${member.name}`}
-        className="shrink-0 border-l border-ash-600 px-3 text-[0.65rem] font-bold uppercase tracking-wider text-ash-300 transition-colors hover:bg-ash-800 hover:text-ember-300"
+        className="shrink-0 border-l border-ash-600 px-3 text-[0.65rem] font-bold uppercase tracking-wider text-ash-300 transition-colors hover:bg-ash-800 hover:text-ash-100"
       >
         Edit
       </button>
@@ -192,7 +192,7 @@ function MemberForm({
     setEdit((p) => ({ ...p, [k]: v }));
 
   return (
-    <div className="space-y-2 rounded-xl border border-ember-500/40 bg-ash-850 p-3">
+    <div className="space-y-2 rounded-xl border border-ash-500 bg-ash-850 p-3">
       <div className="grid grid-cols-2 gap-2">
         <Field label="Name" value={edit.name} onChange={(v) => set('name', v)} />
         <Field
@@ -223,7 +223,7 @@ function MemberForm({
               onClick={() => set('mobility', value)}
               className={`rounded-lg border px-2.5 py-1.5 text-left transition-colors ${
                 edit.mobility === value
-                  ? 'border-ember-500 bg-ember-500/15'
+                  ? 'border-ash-200 bg-ash-100/10'
                   : 'border-ash-700 bg-ash-900 hover:border-ash-600'
               }`}
             >
@@ -237,7 +237,7 @@ function MemberForm({
       <label className="flex cursor-pointer items-center gap-2.5 rounded-lg border border-ash-700 bg-ash-900 px-2.5 py-2">
         <input
           type="checkbox"
-          className="h-4 w-4 accent-ember-500"
+          className="h-4 w-4 accent-ash-200"
           checked={edit.hasCar}
           onChange={(e) => set('hasCar', e.target.checked)}
         />
@@ -262,7 +262,7 @@ function MemberForm({
         <button
           type="button"
           onClick={() => onSave(edit)}
-          className="rounded-lg bg-ember-600 px-3 py-1.5 text-[0.72rem] font-bold uppercase tracking-wider text-white hover:bg-ember-500"
+          className="rounded-lg bg-ash-100 px-3 py-1.5 text-[0.72rem] font-bold uppercase tracking-wider text-ash-950 hover:bg-white"
         >
           Save
         </button>
@@ -306,7 +306,7 @@ function Field({
         value={value}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
-        className="mt-1 w-full rounded-lg border border-ash-700 bg-ash-900 px-2.5 py-1.5 text-[0.78rem] text-ash-100 placeholder:text-ash-600 outline-none focus:border-ember-500"
+        className="mt-1 w-full rounded-lg border border-ash-700 bg-ash-900 px-2.5 py-1.5 text-[0.78rem] text-ash-100 placeholder:text-ash-600 outline-none focus:border-ash-300"
       />
     </label>
   );
