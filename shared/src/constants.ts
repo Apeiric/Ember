@@ -186,12 +186,21 @@ export const COMPASS_LABELS: Record<CompassDirection, string> = {
 // ═══════════════════════════════════════════════════════════════════════════
 
 export const TIMEOUTS_MS = {
-  geocode: 3_500,
+  geocode: 6_000,
   perimeter: 5_000,
   hotspots: 4_000,
   wind: 3_500,
-  ground: 3_500,
+  /**
+   * Mireye fans out to several federal sources (USGS 3DEP, Overture, FEMA NRI)
+   * per request. Warm it answers in ~600ms, but a cold container has been seen
+   * to blow straight through 3.5s. Ground data is an enhancement, so we would
+   * rather wait than silently lose the slope term.
+   */
+  ground: 9_000,
   directions: 6_000,
+  /** Caltrans publishes ~12 MB per district and there is no filtered endpoint. */
+  closures: 12_000,
+  evacZones: 6_000,
   /** LLM gets longer — but the pipeline still returns without it. */
   verdict: 12_000,
 } as const;
@@ -204,6 +213,9 @@ export const CACHE_TTL_MS = {
   wind: 10 * 60 * 1000,
   ground: 60 * 60 * 1000,
   directions: 60 * 1000,
+  /** 12 MB a request — cache hard, it changes on the order of minutes. */
+  closures: 5 * 60 * 1000,
+  evacZones: 3 * 60 * 1000,
 } as const;
 
 export const EARTH_RADIUS_KM = 6371.0088;

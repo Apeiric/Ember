@@ -24,6 +24,8 @@ export interface RunOptions {
   profile: UserProfile;
   scenarioId?: string;
   forceOffline?: boolean;
+  /** Situation reports gathered so far, oldest first. */
+  reports?: string[];
 }
 
 export function useAssessment() {
@@ -56,6 +58,7 @@ export function useAssessment() {
           profile: options.profile,
           scenarioId: options.scenarioId,
           forceOffline: options.forceOffline,
+          reports: options.reports,
         },
         controller.signal,
       );
@@ -86,11 +89,27 @@ export function useAssessment() {
     [run],
   );
 
+  /**
+   * Append a situation report and re-run.
+   *
+   * Reports ACCUMULATE — a road reported blocked stays blocked when the next
+   * one arrives. Replacing the list instead of appending would silently reopen
+   * a closed road the moment a second message came in.
+   */
+  const addReport = useCallback(
+    (text: string) => {
+      const last = lastRequest.current;
+      if (!last) return;
+      void run({ ...last, reports: [...(last.reports ?? []), text] });
+    },
+    [run],
+  );
+
   const reset = useCallback(() => {
     inflight.current?.abort();
     lastRequest.current = null;
     setState({ status: 'idle', data: null, error: null });
   }, []);
 
-  return { ...state, run, reprofile, reset };
+  return { ...state, run, reprofile, addReport, reset };
 }

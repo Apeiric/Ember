@@ -15,3 +15,6 @@ npm-debug.log*
 coverage/
 *.tsbuildinfo
 .eslintcache
+
+# Cesium static assets, staged from node_modules by frontend/scripts/copy-cesium.mjs
+frontend/public/cesium/

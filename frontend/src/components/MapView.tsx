@@ -28,7 +28,12 @@ import type { AssessResponse, LatLng, Polygon } from '@ember/shared';
 import { ROUTE_COLORS } from '../lib/format';
 import { MapFallback } from './MapFallback';
 
-const TOKEN = import.meta.env.VITE_MAPBOX_TOKEN as string | undefined;
+// Accept either name — the shared .env uses MAPBOX_PUBLIC_TOKEN.
+// ⚠️ PUBLIC (pk.*) tokens only. Every VITE_-prefixed var is compiled into the
+// public JS bundle, so an sk.* secret token here would be published to anyone
+// who opens devtools.
+const TOKEN = (import.meta.env.VITE_MAPBOX_TOKEN ??
+  import.meta.env.VITE_MAPBOX_PUBLIC_TOKEN) as string | undefined;
 const STYLE = import.meta.env.VITE_MAPBOX_STYLE ?? 'mapbox://styles/mapbox/dark-v11';
 
 const SRC = {

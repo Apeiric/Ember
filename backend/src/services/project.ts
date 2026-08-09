@@ -181,6 +181,10 @@ export function dangerArrivalAt(
 ): number | null {
   // zones are sorted ascending by arrivesInMinutes, so the first hit is earliest.
   for (const zone of field.zones) {
+    // Advisory zones (evacuation orders) never start a countdown. Someone
+    // standing inside an ordered area would otherwise be "already cut off" on
+    // their own doorstep, and every route would be rejected before they moved.
+    if (zone.advisory) continue;
     if (zoneDanger(zone, point, zone.arrivesInMinutes) >= contactThreshold) {
       return zone.arrivesInMinutes;
     }

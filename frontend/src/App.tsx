@@ -2,40 +2,48 @@
  * EMBER — application shell.
  * OWNER: FRONTEND
  *
- * Layout: map fills the screen, control rail floats over it on the left.
- * On mobile the rail becomes a scrollable sheet under a shorter map.
- *
  * ─────────────────────────────────────────────────────────────────────────────
- * THE DEMO RUNS TOP TO BOTTOM DOWN THE LEFT RAIL — CONTEXT.md §4:
+ * INFORMATION HIERARCHY — enforced by layout order, not by willpower.
  *
- *   1. Address field           → type the demo address, hit the button
- *   2. Map                     → fire glows, red route runs INTO it
- *   3. Verdict card slams in   → EVACUATE / direction / countdown
- *   4. Rejected band           → "the fastest route was refused"
- *   5. Profile toggle          → flip to Reduced mobility, verdict changes live
+ *   PRIMARY    VerdictHero      what to do · which way · how long
+ *   SECONDARY  the map          red route kills you, green route does not
+ *   TERTIARY   <details>        pipeline, sources, why routes were rejected
  *
- * Rehearse it twice (CONTEXT.md §11).
+ * The technical proof is present for credibility and collapsed so it cannot
+ * compete with the instruction. If a judge wants the receipts they are one tap
+ * away; if a frightened person wants the answer it is the biggest thing on the
+ * screen.
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
-import { useEffect, useMemo, useState } from 'react';
-import type { ScenarioSummary, UserProfile } from '@ember/shared';
+import { Suspense, lazy, useEffect, useState } from 'react';
+import type { ScenarioSummary } from '@ember/shared';
 import { useAssessment } from './hooks/useAssessment';
+import { useHousehold } from './hooks/useHousehold';
 import { fetchScenarios } from './lib/api';
 import { AddressInput } from './components/AddressInput';
+import { FamilyView } from './components/FamilyView';
+import { FieldReportInput } from './components/FieldReportInput';
 import { HazardSummary } from './components/HazardSummary';
+import { Household } from './components/Household';
 import { MapView } from './components/MapView';
-import { ProfileToggle } from './components/ProfileToggle';
 import { RouteList } from './components/RouteList';
 import { TracePanel } from './components/TracePanel';
-import { VerdictCard } from './components/VerdictCard';
-import { DegradedBanner } from './components/SourceBadge';
+import { VerdictHero } from './components/VerdictHero';
+
+const Scene3D = lazy(() =>
+  import('./components/Scene3D').then((m) => ({ default: m.Scene3D })),
+);
+
+type View = 'map' | '3d' | 'family';
 
 export default function App() {
-  const { status, data, error, run, reprofile } = useAssessment();
-  const [profile, setProfile] = useState<UserProfile>({ mobility: 'standard', hasCar: true });
+  const { status, data, error, run, addReport } = useAssessment();
+  const household = useHousehold();
   const [scenarios, setScenarios] = useState<ScenarioSummary[]>([]);
   const [address, setAddress] = useState('');
+  const [scenarioId, setScenarioId] = useState<string | undefined>(undefined);
+  const [view, setView] = useState<View>('map');
 
   useEffect(() => {
     void fetchScenarios().then(setScenarios);
@@ -43,39 +51,84 @@ export default function App() {
 
   const loading = status === 'loading';
 
-  function handleSubmit(next: string) {
+  /** The profile the pipeline runs against — whoever is selected in the household. */
+  const activeProfile = household.active?.profile ?? { mobility: 'standard' as const, hasCar: true };
+
+  function handleSubmit(next: string, nextScenarioId?: string) {
     setAddress(next);
-    void run({ address: next, profile });
+    setScenarioId(nextScenarioId);
+    void run({ address: next, profile: activeProfile, scenarioId: nextScenarioId });
   }
 
   /**
-   * Changing who is evacuating re-runs immediately against the same address.
-   * This is the demo kicker — it must feel instant, not like a new search.
+   * Selecting a household member switches BOTH who we are assessing and where
+   * they are — that is the whole point of pre-built profiles. The address box
+   * stays editable underneath, which doubles as the "I'm not at home" override.
    */
-  function handleProfileChange(next: UserProfile) {
-    setProfile(next);
-    if (address) reprofile(next);
+  function handleSelectMember(id: string) {
+    household.setActiveId(id);
+    const member = household.members.find((m) => m.id === id);
+    if (!member) return;
+    const nextAddress = member.address.trim() || address;
+    setAddress(nextAddress);
+    if (nextAddress) void run({ address: nextAddress, profile: member.profile, scenarioId });
   }
 
-  const rejectedCount = useMemo(
-    () => data?.routes.filter((r) => r.rating === 'REJECTED').length ?? 0,
-    [data],
-  );
+  if (view === 'family') {
+    return <FamilyView onExit={() => setView('map')} />;
+  }
 
   return (
     <div className="flex h-full flex-col overflow-hidden lg:relative">
-      {/* ── MAP ────────────────────────────────────────────────────────── */}
-      <div className="h-[45vh] shrink-0 lg:absolute lg:inset-0 lg:h-full">
-        <MapView data={data} />
+      {/* ── SECONDARY: the map ─────────────────────────────────────────── */}
+      <div className="relative h-[38vh] shrink-0 lg:absolute lg:inset-0 lg:h-full">
+        {view === '3d' ? (
+          <Suspense fallback={<Loading label="Loading 3D…" />}>
+            <Scene3D data={data} onExit={() => setView('map')} />
+          </Suspense>
+        ) : (
+          <>
+            <MapView data={data} />
+            {data && (
+              <button
+                type="button"
+                onClick={() => setView('3d')}
+                className="absolute right-3 top-3 z-10 rounded-lg border border-ash-600/80 bg-ash-900/85 px-3 py-1.5 text-xs font-semibold text-ash-200 backdrop-blur transition-colors hover:border-ember-500 hover:text-ember-300"
+              >
+                See it in 3D
+              </button>
+            )}
+          </>
+        )}
       </div>
 
-      {/* ── CONTROL RAIL ───────────────────────────────────────────────── */}
+      {/* ── The rail ───────────────────────────────────────────────────── */}
       <div className="relative flex min-h-0 flex-1 flex-col lg:pointer-events-none lg:absolute lg:inset-0 lg:flex-row">
-        {/* Block flow + space-y, NOT flex-col + gap: in a scrolling flex column
-            the children shrink to fit instead of overflowing, which silently
-            crushes the verdict card into a sliver. */}
-        <div className="scroll-thin pointer-events-auto min-h-0 flex-1 space-y-3 overflow-y-auto bg-ash-950 p-3 lg:m-3 lg:w-[27rem] lg:flex-none lg:bg-transparent lg:p-0">
-          <Header />
+        <div className="scroll-thin pointer-events-auto min-h-0 flex-1 space-y-3 overflow-y-auto bg-ash-950 p-3 lg:m-3 lg:w-[28rem] lg:flex-none lg:bg-transparent lg:p-0">
+          <Header scenarioId={scenarioId} onFamily={() => setView('family')} hasData={Boolean(data)} />
+
+          {/* ── PRIMARY: the verdict. First thing rendered once we have one. */}
+          {data && (
+            <VerdictHero
+              verdict={data.verdict}
+              recommended={data.recommended}
+            />
+          )}
+
+          {/* The one thing we refused to send you down. Kept adjacent to the
+              verdict because it is the reason to trust it. */}
+          {data?.naive?.rating === 'REJECTED' && data.verdict.rejectedSummary && (
+            <div className="rounded-2xl border border-alarm-500/30 bg-alarm-500/[0.07] px-4 py-3">
+              <p className="text-[0.62rem] font-bold uppercase tracking-[0.14em] text-alarm-400">
+                We did not send you this way
+              </p>
+              <p className="mt-1 text-[0.82rem] leading-snug text-ash-200">
+                {data.verdict.rejectedSummary}
+              </p>
+            </div>
+          )}
+
+          {!data && !error && <Intro />}
 
           <div className="panel p-4">
             <AddressInput
@@ -86,9 +139,24 @@ export default function App() {
             />
           </div>
 
-          <div className="panel p-4">
-            <ProfileToggle profile={profile} onChange={handleProfileChange} disabled={loading} />
-          </div>
+          <Household
+            members={household.members}
+            activeId={household.activeId}
+            onSelect={handleSelectMember}
+            onUpdate={household.update}
+            onAdd={household.add}
+            onRemove={household.remove}
+            disabled={loading}
+          />
+
+          {data && (
+            <FieldReportInput
+              onSubmit={(text) => addReport(text)}
+              loading={loading}
+              reports={data.reports}
+              impact={data.impact}
+            />
+          )}
 
           {error && (
             <div className="panel border-alarm-500/40 bg-alarm-500/10 p-4">
@@ -97,64 +165,103 @@ export default function App() {
             </div>
           )}
 
+          {/* ── TERTIARY: the proof. Collapsed. ──────────────────────────── */}
           {data && (
-            <>
-              <DegradedBanner degraded={data.trace.degraded} />
-
-              <VerdictCard
-                verdict={data.verdict}
-                recommended={data.recommended}
-                naive={data.naive}
-              />
-
-              <HazardSummary data={data} />
-
-              <RouteList routes={data.routes} recommendedId={data.recommended?.route.id} />
-
-              <TracePanel trace={data.trace} />
-
-              {/* Boxed rather than loose: on desktop the rail is transparent and
-                  bare text collides with the map's own caption underneath. */}
-              <p className="rounded-xl bg-ash-950/80 px-3 py-2 text-[0.62rem] leading-snug text-ash-500 backdrop-blur-sm">
-                Ember is a decision aid, not an official evacuation order. Always follow
-                instructions from emergency services. {rejectedCount > 0 && `${rejectedCount} route`}
-                {rejectedCount > 1 ? 's were' : rejectedCount === 1 ? ' was' : ''}
-                {rejectedCount > 0 && ' rejected by the safety engine.'}
-              </p>
-            </>
+            <details className="panel group overflow-hidden">
+              <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 transition-colors hover:bg-ash-800/50">
+                <span className="label">Show the working</span>
+                <span className="flex items-center gap-2 text-[0.66rem] text-ash-500">
+                  {data.routes.filter((r) => r.rating === 'REJECTED').length} route
+                  {data.routes.filter((r) => r.rating === 'REJECTED').length === 1 ? '' : 's'} rejected
+                  <span className="text-ash-600 transition-transform group-open:rotate-90">›</span>
+                </span>
+              </summary>
+              <div className="space-y-3 border-t border-ash-700/60 p-3">
+                <HazardSummary data={data} />
+                <RouteList routes={data.routes} recommendedId={data.recommended?.route.id} />
+                <TracePanel trace={data.trace} />
+              </div>
+            </details>
           )}
 
-          {!data && !error && <EmptyState />}
+          {data && (
+            <p className="rounded-xl bg-ash-950/80 px-3 py-2 text-[0.62rem] leading-snug text-ash-500 backdrop-blur-sm">
+              Ember is a decision aid, not an official evacuation order. Always follow instructions
+              from emergency services.
+            </p>
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-function Header() {
+function Header({
+  scenarioId,
+  onFamily,
+  hasData,
+}: {
+  scenarioId?: string;
+  onFamily: () => void;
+  hasData: boolean;
+}) {
   return (
-    <header className="flex items-baseline justify-between gap-2 px-1 pt-1">
+    <header className="flex items-center justify-between gap-2 px-1 pt-1">
       <div className="flex items-baseline gap-2">
         <span className="text-xl font-black tracking-tight text-ember-500">EMBER</span>
-        <span className="hidden text-[0.68rem] text-ash-400 sm:inline">
-          the safe way out of a wildfire
+        <span
+          title={
+            scenarioId
+              ? `Pinned to the "${scenarioId}" scenario — reproducible, no live feeds.`
+              : 'Running against live feeds where available.'
+          }
+          className={`rounded-full border px-2 py-0.5 text-[0.55rem] font-bold uppercase tracking-[0.12em] ${
+            scenarioId
+              ? 'border-ember-500/40 bg-ember-500/10 text-ember-300'
+              : 'border-safe-500/30 bg-safe-500/10 text-safe-400'
+          }`}
+        >
+          {scenarioId ? 'Scenario' : 'Live'}
         </span>
       </div>
+      <button
+        type="button"
+        onClick={onFamily}
+        className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors ${
+          hasData
+            ? 'border-ember-500/50 bg-ember-500/10 text-ember-300 hover:bg-ember-500/20'
+            : 'border-ash-600 text-ash-300 hover:border-ember-500 hover:text-ember-300'
+        }`}
+      >
+        Your people
+      </button>
     </header>
   );
 }
 
-function EmptyState() {
+function Intro() {
   return (
     <div className="panel p-4">
-      <p className="text-[0.82rem] leading-relaxed text-ash-300">
-        Everyone tells you a fire <em className="not-italic text-ash-100">exists</em>. Ember tells
-        you the safe way <em className="not-italic text-ember-400">out</em>.
+      <p className="text-[0.9rem] leading-relaxed text-ash-200">
+        Everyone tells you a fire <em className="not-italic text-ash-400">exists</em>.
+        <br />
+        Ember tells you the way <em className="not-italic font-semibold text-ember-400">out</em>.
       </p>
-      <p className="mt-2 text-[0.72rem] leading-relaxed text-ash-500">
-        Routes are scored against where the fire is going, not where it is now — and against how
-        fast <em className="not-italic">you</em> can actually move.
+      <p className="mt-2 text-[0.75rem] leading-relaxed text-ash-500">
+        We check where the fire will be when you get there — not where it is now — and how fast you
+        can actually move.
       </p>
+    </div>
+  );
+}
+
+function Loading({ label }: { label: string }) {
+  return (
+    <div className="flex h-full w-full items-center justify-center bg-ash-950">
+      <div className="text-center">
+        <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-2 border-ember-500/30 border-t-ember-400" />
+        <p className="text-sm text-ash-300">{label}</p>
+      </div>
     </div>
   );
 }

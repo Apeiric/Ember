@@ -136,6 +136,32 @@ export interface DangerZone {
   arrivesInMinutes: number;
   /** Shown to the user, e.g. "Active fire perimeter", "Projected spread @ 30 min". */
   label: string;
+  /**
+   * Advisory zones count toward cumulative exposure but never trigger a cutoff
+   * or a rejection.
+   *
+   * Needed for evacuation-order areas. An order means "leave here", not "this
+   * ground is lethal" — and the person we are routing is usually standing
+   * inside one. Treating it as ordinary danger makes their own doorstep a
+   * hazard, drives `minutesUntilCutoff` negative before they move, and returns
+   * SHELTER IN PLACE to someone who has simply been told to evacuate.
+   *
+   * As exposure, it does the right thing for free: a route that leaves the
+   * ordered area quickly accrues little, one that drives deep into it accrues a
+   * lot, and the judge prefers the former without any special-casing.
+   */
+  advisory?: boolean;
+  /**
+   * How far outside the polygon this hazard still hurts you, km.
+   * Defaults to `DANGER_FALLOFF_KM` when omitted.
+   *
+   * This is per-zone because reach genuinely differs by hazard. You cannot
+   * stand 50 m from a fire front, so a fire zone has a wide shoulder. A
+   * gridlocked road or a downed line has almost none — the next street over is
+   * fine. Using the fire shoulder for a road closure closes every road within
+   * 800 m of it, which is how one traffic report strands a whole family.
+   */
+  falloffKm?: number;
 }
 
 export interface DangerField {
@@ -206,6 +232,16 @@ export interface RouteSegment {
   durationMinutes: number;
   /** Minutes from departure until you REACH `end`. This is what makes routing time-aware. */
   cumulativeMinutes: number;
+  /**
+   * Road this segment is on, e.g. "Sunset Blvd". From Google's step
+   * instructions, or authored on canned routes.
+   *
+   * Load-bearing for field reports: without it, "Sunset Blvd is blocked" can
+   * only be resolved to a whole ROUTE, and blocking a whole route also blocks
+   * the shared spine every other route leaves the house on — so one report
+   * strands you completely. With it, the block lands on the actual road.
+   */
+  roadName?: string;
   /** Filled in by ground.ts when Mireye terrain data is available. */
   gradePct?: number;
   elevationGainM?: number;
@@ -363,6 +399,184 @@ export interface RouteVerdict {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+// FIELD REPORTS — messy human language, structured by Claude.
+//
+// ─────────────────────────────────────────────────────────────────────────────
+// THE DIVISION OF LABOUR, AND WHY IT IS THE WHOLE PITCH:
+//
+//   Claude reads   "the fire jumped Sunset, it's blocked, heavy smoke east side"
+//   and produces   RoadBlock{ road: "Sunset Blvd" }, ReportedDanger{ east side }
+//
+//   Then GEOMETRY decides whether to believe it. An extracted road only counts
+//   if it actually intersects a candidate route we already hold. A model that
+//   hallucinates "Mildred Ave" gets silently dropped, because no route touches
+//   it. Claude proposes; geometry disposes.
+//
+//   Then the JUDGE — completely unchanged — re-runs. A blocked road enters the
+//   system as a lethal DangerZone, which the judge already knows how to reject.
+//   The language model never decides whether a route is safe.
+// ─────────────────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+
+export type ReportConfidence = 'high' | 'medium' | 'low';
+
+export interface RoadBlock {
+  /** Road name exactly as the human said it, e.g. "Sunset Blvd". */
+  road: string;
+  /** Where we managed to place it. `null` = named but not locatable. */
+  location: LatLng | null;
+  /** Why it is impassable, in the reporter's words. */
+  reason: string;
+  confidence: ReportConfidence;
+  /**
+   * TRUE only once we matched this road against real route geometry.
+   * Unverified blocks are shown to the user but NEVER fed to the judge.
+   */
+  verified: boolean;
+  /** Route ids this block actually sits on. Empty ⇒ we could not corroborate it. */
+  affectsRouteIds: string[];
+  /**
+   * Exactly which segments are shut, as `{routeId, segmentIndex}` pairs. The
+   * judge only sees danger over THESE segments, so a closure on one road does
+   * not silently close every route that happens to share a driveway.
+   */
+  affectedSegments: { routeId: string; segmentIndex: number }[];
+}
+
+export interface ReportedDanger {
+  description: string;
+  location: LatLng | null;
+  radiusKm: number;
+  /** 0..1, mapped from how the human described it. */
+  severity: number;
+  confidence: ReportConfidence;
+  verified: boolean;
+}
+
+export interface FieldReport {
+  id: string;
+  /** Exactly what the human typed. Never paraphrased — this is the audit record. */
+  rawText: string;
+  receivedAt: string;
+  blocks: RoadBlock[];
+  dangers: ReportedDanger[];
+  /** One-line reading of the report, for the UI. */
+  summary: string;
+  /** Things Claude flagged but we could not place on the map. Shown, not used. */
+  unresolved: string[];
+  interpretedBy: 'claude' | 'groq' | 'heuristic';
+}
+
+/** What changed after a report was folded in. Drives the "watch the route change" beat. */
+export interface ReportImpact {
+  report: FieldReport;
+  /** Route the user was on before the report arrived. */
+  previousRouteId: string | null;
+  /** Route they are on now. Different ⇒ we rerouted them. */
+  currentRouteId: string | null;
+  rerouted: boolean;
+  /** Routes this report knocked out. */
+  newlyRejectedRouteIds: string[];
+  /** Minutes of slack before vs after. */
+  previousCutoffMinutes: number | null;
+  currentCutoffMinutes: number | null;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// OFFICIAL GROUND TRUTH — closures and evacuation orders from the agencies
+// that actually own those decisions.
+//
+// A field report is one person's claim. THIS is the state saying a road is shut
+// or an area must be cleared. It carries more weight and needs no verification
+// step — the authority IS the verification.
+// ═══════════════════════════════════════════════════════════════════════════
+
+export interface RoadClosure {
+  id: string;
+  /** State route designation, e.g. "SR-1", "I-405". */
+  road: string;
+  /** Human location, e.g. "Pacific Coast Hwy near Topanga Canyon Blvd". */
+  description: string;
+  from: LatLng;
+  to: LatLng;
+  /** Why it is shut, e.g. "Roadway Excavation", "Permanent Road Closure of Hwy". */
+  reason: string;
+  /** Mainline / On Ramp / Off Ramp / Connector — a shut ramp is not a shut freeway. */
+  facility: string;
+  startsAt: string | null;
+  endsAt: string | null;
+  indefinite: boolean;
+}
+
+export type EvacuationStatus = 'order' | 'warning' | 'advisory' | 'unknown';
+
+export interface EvacuationZone {
+  id: string;
+  /** Agency zone code, e.g. "LFD-1239". What officials say on the radio. */
+  zoneId: string;
+  status: EvacuationStatus;
+  county: string | null;
+  city: string | null;
+  /** The agency's own wording. Quote it — do not paraphrase an official order. */
+  info: string | null;
+  polygon: Polygon;
+}
+
+export interface OfficialContext {
+  closures: RoadClosure[];
+  zones: EvacuationZone[];
+  /** The evacuation zone the user is standing in, if any. Drives the verdict. */
+  originZone: EvacuationZone | null;
+  provenance: {
+    closures: Provenance;
+    zones: Provenance;
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// FAMILY COORDINATION — same fire, same engine, one verdict per person.
+//
+// Canned and deterministic. No multi-user infrastructure, no live tracking:
+// four real profiles at four real locations, each scored by the same judge.
+// The point is that ACCESSIBILITY and COORDINATION fall out of the same maths.
+// ═══════════════════════════════════════════════════════════════════════════
+
+export interface FamilyMember {
+  id: string;
+  name: string;
+  /** "You", "Grandmother", "Uncle", "Kids". */
+  relationship: string;
+  address: string;
+  location: LatLng;
+  profile: UserProfile;
+  /** The human sentence this profile came from. Shown in the UI as provenance. */
+  situation?: string;
+}
+
+export interface FamilyMemberAssessment {
+  member: FamilyMember;
+  verdict: RouteVerdict;
+  recommended: ScoredRoute | null;
+  naive: ScoredRoute | null;
+  routes: ScoredRoute[];
+  tuning: ProfileTuning;
+  /** Ascending = act on this person first. Computed, not authored. */
+  urgencyRank: number;
+}
+
+export interface FamilyAssessment {
+  ok: true;
+  scenarioId: string;
+  hazard: Hazard;
+  field: DangerField;
+  /** Sorted most-urgent-first. */
+  members: FamilyMemberAssessment[];
+  /** Plain-language coordination plan derived from the sorted verdicts. */
+  coordination: string[];
+  trace: Trace;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // PIPELINE TRACE — observability. Renders as the debug panel; judges love it.
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -398,6 +612,12 @@ export interface AssessRequest {
   scenarioId?: string;
   /** Demo switch: skip every network call and run purely on canned data. */
   forceOffline?: boolean;
+  /**
+   * Free-text situation reports gathered so far, oldest first. Each is parsed by
+   * Claude into structured facts, geometrically verified, and folded into the
+   * danger field before the judge runs.
+   */
+  reports?: string[];
 }
 
 export interface Origin {
@@ -422,6 +642,12 @@ export interface AssessResponse {
   /** The route Google would have given you. Draw this in RED. */
   naive: ScoredRoute | null;
   verdict: RouteVerdict;
+  /** Official closures and evacuation orders in effect around the origin. */
+  official: OfficialContext;
+  /** Structured facts extracted from any field reports supplied with the request. */
+  reports: FieldReport[];
+  /** What the most recent report changed. `null` when no report was supplied. */
+  impact: ReportImpact | null;
   trace: Trace;
 }
 

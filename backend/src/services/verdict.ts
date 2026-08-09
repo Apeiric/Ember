@@ -29,6 +29,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { COMPASS_LABELS, TIMEOUTS_MS, VERDICT_THRESHOLDS } from '@ember/shared';
 import type {
   Citation,
+  OfficialContext,
   Decision,
   GroundContext,
   Hazard,
@@ -44,6 +45,8 @@ import { profileNote } from './profiles';
 
 export interface VerdictInput {
   hazard: Hazard;
+  /** Official closures and evacuation orders, when available. */
+  official?: OfficialContext;
   ground: GroundContext;
   judgement: JudgeResult;
   profile: UserProfile;
@@ -144,6 +147,13 @@ function buildCitations(
       label: `${hazard.hotspots.length} satellite hotspot detections`,
       source: hazard.provenance.hotspots.provider,
       retrievedAt: hazard.provenance.hotspots.fetchedAt,
+    });
+  }
+  if (judgement.field.zones.some((z) => z.advisory)) {
+    const orders = judgement.field.zones.filter((z) => z.advisory).length;
+    cites.push({
+      label: `${orders} official evacuation zone${orders === 1 ? '' : 's'} in effect`,
+      source: 'CAL FIRE / Cal OES statewide evacuation aggregation',
     });
   }
   if (ground.exitCount != null) {
@@ -257,6 +267,19 @@ function buildPrompt(input: VerdictInput, facts: VerdictFacts): string {
 
   if (ground.exitCount != null) {
     lines.push(`ROADS OUT OF THIS AREA: ${ground.exitCount}`);
+  }
+  const originZone = input.official?.originZone;
+  if (originZone) {
+    lines.push(
+      `OFFICIAL STATUS: this address is inside evacuation zone ${originZone.zoneId} — ${originZone.status.toUpperCase()}.` +
+        (originZone.info ? ` Agency wording: "${originZone.info.slice(0, 200)}"` : ''),
+    );
+  }
+  const blocking = (input.official?.closures ?? []).filter((c) => /mainline|connector/i.test(c.facility));
+  if (blocking.length > 0) {
+    lines.push(
+      `OFFICIAL ROAD CLOSURES NEARBY: ${blocking.slice(0, 4).map((c) => `${c.road} (${c.reason})`).join('; ')}`,
+    );
   }
 
   if (best) {
@@ -484,6 +507,13 @@ function templateReasoning(input: VerdictInput, facts: VerdictFacts): string[] {
   const { judgement, hazard, ground } = input;
   const out: string[] = [];
 
+  // An official order outranks anything we computed. Say it first.
+  const zone = input.official?.originZone;
+  if (zone?.status === 'order') {
+    out.push(`You are inside a mandatory evacuation order (zone ${zone.zoneId}). Go.`);
+  } else if (zone?.status === 'warning') {
+    out.push(`You are inside an evacuation warning area (zone ${zone.zoneId}).`);
+  }
   if (facts.minutesUntilCutoff !== null) {
     out.push(
       `About ${facts.minutesUntilCutoff} min before the fire reaches this road.`,

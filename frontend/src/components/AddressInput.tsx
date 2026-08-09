@@ -6,11 +6,17 @@
  * evacuation.
  */
 
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import type { ScenarioSummary } from '@ember/shared';
 
 interface Props {
-  onSubmit: (address: string) => void;
+  /**
+   * `scenarioId` is set ONLY by the demo buttons. Typing an address leaves it
+   * undefined, which runs the pipeline fully live. Without this the demo
+   * buttons would geocode for real and load whatever fire is burning today
+   * instead of the scenario they are named after.
+   */
+  onSubmit: (address: string, scenarioId?: string) => void;
   loading: boolean;
   initialValue?: string;
   /** Demo addresses, so you never have to type on stage. */
@@ -19,6 +25,15 @@ interface Props {
 
 export function AddressInput({ onSubmit, loading, initialValue = '', scenarios }: Props) {
   const [value, setValue] = useState(initialValue);
+
+  /**
+   * Selecting someone in the household changes the address out from under this
+   * field. Without this sync the box would keep showing the previous person's
+   * address — and, worse, submitting it would send the OLD address with the NEW
+   * profile. Typing still wins; `initialValue` only moves when the parent
+   * deliberately changes it.
+   */
+  useEffect(() => setValue(initialValue), [initialValue]);
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -70,7 +85,7 @@ export function AddressInput({ onSubmit, loading, initialValue = '', scenarios }
               disabled={loading}
               onClick={() => {
                 setValue(s.demoAddress);
-                onSubmit(s.demoAddress);
+                onSubmit(s.demoAddress, s.id);
               }}
               className="rounded-lg border border-ash-700 bg-ash-850 px-2.5 py-1 text-[0.7rem] text-ash-300 transition-colors hover:border-ember-500/50 hover:text-ember-300 disabled:opacity-40"
             >

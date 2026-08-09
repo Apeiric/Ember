@@ -11,6 +11,8 @@ import type {
   AssessRequest,
   AssessResponse,
   ApiError,
+  FamilyAssessment,
+  FamilyMember,
   ScenarioSummary,
 } from '@ember/shared';
 
@@ -62,6 +64,32 @@ async function post<T>(path: string, body: unknown, signal?: AbortSignal): Promi
 /** THE call. Runs the whole pipeline and returns everything the UI needs. */
 export function assess(req: AssessRequest, signal?: AbortSignal): Promise<AssessResponse> {
   return post<AssessResponse>('/api/assess', req, signal);
+}
+
+/** The pre-built household roster. No judging — just the profiles. */
+export async function fetchHousehold(signal?: AbortSignal): Promise<FamilyMember[]> {
+  try {
+    const res = await fetch(`${BASE}/api/household`, { signal });
+    if (!res.ok) return [];
+    const body = (await res.json()) as { members?: FamilyMember[] };
+    return body.members ?? [];
+  } catch {
+    // The household is the first thing on screen. If it cannot load, the app
+    // still has to work — App seeds an empty list and the address box alone is
+    // enough to get a verdict.
+    return [];
+  }
+}
+
+/** Canned four-person household, each scored by the same judge. */
+export async function fetchFamily(signal?: AbortSignal): Promise<FamilyAssessment> {
+  const res = await fetch(`${BASE}/api/family`, { signal });
+  const body = (await res.json().catch(() => null)) as FamilyAssessment | ApiError | null;
+  if (!res.ok || !body || ('ok' in body && !body.ok)) {
+    const err = body as ApiError | null;
+    throw new ApiRequestError(err?.error ?? `Request failed (${res.status})`, err?.detail);
+  }
+  return body as FamilyAssessment;
 }
 
 export async function fetchScenarios(signal?: AbortSignal): Promise<ScenarioSummary[]> {

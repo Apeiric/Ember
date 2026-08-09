@@ -80,6 +80,22 @@ design, not a compromise (CONTEXT.md §7).
 
 NIFC perimeters and NWS wind need no key.
 
+### Keyless official feeds (no config, always on)
+
+| Feed | Endpoint |
+|---|---|
+| Fire perimeters | `services3.arcgis.com/T4QMspbfLg3qTGWY/…/WFIGS_Interagency_Perimeters_Current/FeatureServer/0/query` |
+| Wind | `api.weather.gov/points/{lat},{lng}` → stations → `observations/latest` |
+| **Road closures** | `cwwp2.dot.ca.gov/data/d{N}/lcs/lcsStatusD{NN}.json` (Caltrans LCS, per district) |
+| **Evacuation zones** | `services1.arcgis.com/jUJYIo9tSA7EHvfZ/…/Combined_Statewide_Evacuation_Public_View/FeatureServer/0` (CAL FIRE) |
+| Evacuation zones (backup) | `services.arcgis.com/BLN4oKB0N1YSgvY8/…/CA_EVACUATIONS_CalOESHosted_view/FeatureServer/0` (Cal OES) |
+| Geocoding (backup) | `geocoding.geo.census.gov` · `nominatim.openstreetmap.org` |
+
+⚠️ **NIFC publishes no national road-closure or evacuation-zone layer.** Its evac
+layers are per-incident and ad hoc (`2025_Trout_Fire_Evacuation_Areas`), with no
+stable schema. California's statewide aggregations are used instead — so closures
+and evacuation orders are **California-only** today.
+
 > **Going on stage with bad wifi?** Set `EMBER_FORCE_OFFLINE=true`. Every stage
 > uses canned data and the demo becomes byte-for-byte reproducible.
 

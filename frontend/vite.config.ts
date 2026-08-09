@@ -5,6 +5,11 @@ import { fileURLToPath } from 'node:url';
 const sharedDir = fileURLToPath(new URL('../shared/src', import.meta.url));
 
 export default defineConfig({
+  // NOTE: no vite-plugin-cesium. Under Vite 6 it serves Cesium's Assets/ and
+  // Widgets/ but lets Workers/ fall through to the SPA fallback, so Cesium gets
+  // index.html where a worker script should be and dies at render time.
+  // `scripts/copy-cesium.mjs` stages the assets into public/ instead (see
+  // predev/prebuild), and index.html sets window.CESIUM_BASE_URL.
   plugins: [react()],
   resolve: {
     alias: {

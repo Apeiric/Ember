@@ -18,6 +18,14 @@
   </head>
   <body>
     <div id="root"></div>
+    <!--
+      Cesium resolves its workers, textures and widget CSS relative to this.
+      Assets are staged into public/cesium by frontend/scripts/copy-cesium.mjs
+      (predev / prebuild). Must be set BEFORE the app module loads.
+    -->
+    <script>
+      window.CESIUM_BASE_URL = '/cesium';
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

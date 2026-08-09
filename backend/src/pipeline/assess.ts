@@ -19,6 +19,7 @@
 import type {
   AssessResponse,
   FieldReport,
+  OfficialContext,
   ParsedAssessRequest,
   ReportImpact,
 } from '@ember/shared';
@@ -31,6 +32,8 @@ import { judgeRoutes } from '../services/judge';
 import { tuningFor } from '../services/profiles';
 import { projectDangerField } from '../services/project';
 import { fetchRoutes } from '../services/routing';
+import { fetchOfficial } from '../services/official';
+import { applyOfficial, countBlocking } from '../services/apply-official';
 import { interpretReport } from '../services/interpret';
 import { applyReports, countVerified } from '../services/apply-report';
 import { writeVerdict } from '../services/verdict';
@@ -55,15 +58,28 @@ export async function runAssessment(req: ParsedAssessRequest): Promise<AssessRes
   // Independent feeds. Running them in series would add ~4s to every request
   // for no reason, and on stage that is the difference between a demo that
   // feels instant and one that feels broken.
-  const [hazard, ground] = await Promise.all([
+  const [hazard, ground, official] = await Promise.all([
     fetchHazard({ location: origin, forceOffline: req.forceOffline, scenarioId }, trace),
     fetchGround(origin, trace, { forceOffline: req.forceOffline, scenarioId }),
+    // Official closures + evacuation orders. Independent of the fire feeds:
+    // a road can be shut for a downed line with no fire anywhere near it.
+    fetchOfficial(origin, trace, { forceOffline: req.forceOffline, scenarioId }),
   ]);
 
   // ── 4. PROJECT ──────────────────────────────────────────────────────────
   // Last point in the pipeline where the word "wildfire" means anything.
-  const field = await trace.step('project', async () =>
+  const projected = await trace.step('project', async () =>
     projectDangerField(hazard.data, ground.data),
+  );
+
+  // Official ground truth folded in BEFORE routing, so closed roads are already
+  // lethal by the time candidate routes are scored. `judge.ts` is untouched:
+  // a closed carriageway is just another DangerZone.
+  const field = applyOfficial(projected, official);
+  log.info(
+    `official: ${countBlocking(official.closures)} blocking closure(s) of ${official.closures.length}, ` +
+      `${official.zones.length} evacuation zone(s)` +
+      (official.originZone ? ` — origin is inside ${official.originZone.zoneId} (${official.originZone.status})` : ''),
   );
 
   // ── 5. ROUTE ────────────────────────────────────────────────────────────
@@ -117,6 +133,7 @@ export async function runAssessment(req: ParsedAssessRequest): Promise<AssessRes
     {
       hazard: hazard.data,
       ground: ground.data,
+      official,
       judgement,
       profile: req.profile,
       tuning,
@@ -164,6 +181,7 @@ export async function runAssessment(req: ParsedAssessRequest): Promise<AssessRes
     recommended: judgement.recommended,
     naive: judgement.naive,
     verdict,
+    official,
     reports,
     impact,
     trace: trace.finish(),
