@@ -14,6 +14,10 @@ import type { ProfileTuning, ScoredRoute } from '@ember/shared';
 interface Props {
   recommended: ScoredRoute;
   tuning: ProfileTuning;
+  /** This person's grab-list — oxygen tank, EpiPen, the cat. */
+  essentials?: string[];
+  /** Why the OTHER destination lost — "why Oroville, not Chico", answered. */
+  whyNot?: { name: string; reason: string } | null;
 }
 
 interface PlanStep {
@@ -27,7 +31,7 @@ interface PlanStep {
   startMinutes: number;
 }
 
-export function RoutePlan({ recommended, tuning }: Props) {
+export function RoutePlan({ recommended, tuning, essentials, whyNot }: Props) {
   const steps = groupSegments(recommended, tuning);
   if (steps.length === 0) return null;
 
@@ -56,6 +60,12 @@ export function RoutePlan({ recommended, tuning }: Props) {
           detail={`${tuning.prepMinutes} min — ${tuning.label.toLowerCase()}`}
           eta={`min 0–${tuning.prepMinutes}`}
         />
+        {(essentials?.length ?? 0) > 0 && (
+          <div className="mb-2 ml-[2.05rem] rounded-lg border border-caution-500/40 bg-caution-500/10 px-2.5 py-1.5 text-[0.7rem] leading-snug text-caution-200">
+            Don't leave without:{' '}
+            <strong className="text-caution-100">{essentials!.join(' · ')}</strong>
+          </div>
+        )}
 
         {steps.map((s, i) => {
           const hasPinch = i === pinchStep;
@@ -91,6 +101,17 @@ export function RoutePlan({ recommended, tuning }: Props) {
           last
         />
       </ol>
+
+      {whyNot && (
+        <div className="border-t border-ash-600/60 px-4 py-2.5">
+          <p className="text-[0.72rem] leading-snug text-ash-200">
+            <span className="font-bold uppercase tracking-wide text-ash-300">
+              Why not {whyNot.name}?
+            </span>{' '}
+            Because {whyNot.reason}.
+          </p>
+        </div>
+      )}
     </section>
   );
 }

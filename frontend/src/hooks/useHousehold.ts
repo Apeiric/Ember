@@ -29,6 +29,8 @@ export interface MemberEdit {
   mobility: Mobility;
   hasCar: boolean;
   situation: string;
+  /** Comma-separated in the form; stored as a list. "Oxygen tank, EpiPen". */
+  essentials: string;
 }
 
 export function useHousehold() {
@@ -68,6 +70,10 @@ export function useHousehold() {
         relationship: edit.relationship.trim() || existing.relationship,
         address: edit.address.trim() || existing.address,
         situation: edit.situation.trim() || undefined,
+        essentials: edit.essentials
+          .split(',')
+          .map((t) => t.trim())
+          .filter(Boolean),
         profile: { ...existing.profile, mobility: edit.mobility, hasCar: edit.hasCar },
       };
       setMembers((prev) => prev.map((m) => (m.id === id ? merged : m)));

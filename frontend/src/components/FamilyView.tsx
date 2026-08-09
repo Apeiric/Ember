@@ -28,7 +28,11 @@ const DECISION_STYLE: Record<string, { chip: string; bar: string; say: string }>
   MONITOR: { chip: 'bg-ash-600 text-ash-100', bar: 'bg-ash-500', say: 'Stay alert' },
 };
 
-export function FamilyView({ onExit }: { onExit: () => void }) {
+/**
+ * Embeddable board — the PEOPLE tab renders this under the household editor.
+ * It fetches its own data so the tab is self-contained.
+ */
+export function FamilyBoard() {
   const [data, setData] = useState<FamilyAssessment | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -43,25 +47,19 @@ export function FamilyView({ onExit }: { onExit: () => void }) {
   }, []);
 
   if (error) {
-    return (
-      <Shell onExit={onExit}>
-        <p className="text-sm text-alarm-400">Could not load the family view: {error}</p>
-      </Shell>
-    );
+    return <p className="text-sm text-alarm-400">Could not load the coordination board: {error}</p>;
   }
   if (!data) {
     return (
-      <Shell onExit={onExit}>
-        <div className="flex items-center gap-3 text-sm text-ash-400">
-          <span className="h-4 w-4 animate-spin rounded-full border-2 border-ember-500/30 border-t-ember-400" />
-          Working out everyone’s verdict…
-        </div>
-      </Shell>
+      <div className="flex items-center gap-3 p-2 text-sm text-ash-300">
+        <span className="h-4 w-4 animate-spin rounded-full border-2 border-ember-500/30 border-t-ember-400" />
+        Working out everyone’s verdict…
+      </div>
     );
   }
 
   return (
-    <Shell onExit={onExit}>
+    <>
       {/* ── WHAT TO DO FIRST ─────────────────────────────────────────── */}
       <section className="rounded-2xl border border-ember-500/30 bg-ember-500/[0.07] p-4">
         <h2 className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-ember-300">
@@ -90,7 +88,7 @@ export function FamilyView({ onExit }: { onExit: () => void }) {
         Same fire, same engine, four different answers — the difference is how fast each person can
         actually move. Demo household on the reconstructed {data.hazard.name}.
       </p>
-    </Shell>
+    </>
   );
 }
 
@@ -165,23 +163,3 @@ function Stat({ value, unit, label }: { value: string; unit: string; label: stri
   );
 }
 
-function Shell({ children, onExit }: { children: React.ReactNode; onExit: () => void }) {
-  return (
-    <div className="scroll-thin h-full overflow-y-auto bg-ash-950 p-3">
-      <header className="mb-3 flex items-center justify-between gap-2 px-1">
-        <div>
-          <h1 className="text-lg font-black tracking-tight text-ash-100">Your people</h1>
-          <p className="text-[0.68rem] text-ash-400">Most urgent first</p>
-        </div>
-        <button
-          type="button"
-          onClick={onExit}
-          className="rounded-lg border border-ash-600 px-3 py-1.5 text-xs font-semibold text-ash-200 transition-colors hover:border-ember-500 hover:text-ember-300"
-        >
-          ← Back
-        </button>
-      </header>
-      {children}
-    </div>
-  );
-}

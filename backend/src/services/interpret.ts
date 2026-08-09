@@ -119,11 +119,35 @@ export interface InterpretInput {
   forceOffline?: boolean;
 }
 
+/**
+ * Reports ACCUMULATE across re-runs — profile switches and new reports re-send
+ * the whole list — so without a cache every rerun re-pays a Claude call per
+ * report already read. Keyed on the raw text + the route set, because the
+ * geometric verification depends on which routes exist. In-process and
+ * unbounded-ish: capped, and report texts are ≤2000 chars by contract.
+ */
+const interpretCache = new Map<string, FieldReport>();
+const INTERPRET_CACHE_MAX = 200;
+
 export async function interpretReport(
   input: InterpretInput,
   trace: TraceRecorder,
 ): Promise<FieldReport> {
   const offline = isOffline(input.forceOffline);
+
+  const cacheKey = `${input.routes.map((r) => r.id).join(',')}|${input.text}`;
+  const hit = interpretCache.get(cacheKey);
+  if (hit) {
+    trace.record({
+      name: 'interpret',
+      status: 'ok',
+      ms: 0,
+      source: 'cached',
+      provider: `${hit.interpretedBy} (cached)`,
+      note: 'Report already read — reusing the verified facts.',
+    });
+    return hit;
+  }
 
   const strategies: Strategy<Extraction>[] = [
     {
@@ -190,7 +214,7 @@ export async function interpretReport(
     };
   });
 
-  return {
+  const report: FieldReport = {
     id: `rpt_${Date.now().toString(36)}`,
     rawText: input.text,
     receivedAt: new Date().toISOString(),
@@ -204,6 +228,16 @@ export async function interpretReport(
         ? 'groq'
         : 'heuristic',
   };
+
+  // Only cache real reads — a heuristic fallback should retry the LLM next run.
+  if (report.interpretedBy !== 'heuristic') {
+    if (interpretCache.size >= INTERPRET_CACHE_MAX) {
+      const oldest = interpretCache.keys().next().value;
+      if (oldest !== undefined) interpretCache.delete(oldest);
+    }
+    interpretCache.set(cacheKey, report);
+  }
+  return report;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

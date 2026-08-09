@@ -26,6 +26,7 @@ export const assessRequestSchema = z.object({
   profile: userProfileSchema.default({ mobility: 'standard', hasCar: true }),
   scenarioId: z.string().trim().min(1).max(80).optional(),
   forceOffline: z.boolean().optional(),
+  fastVerdict: z.boolean().optional(),
   /**
    * Free-text situation reports, oldest first. Capped hard: each one costs an
    * LLM call, and an unbounded array is a trivial way to run up a bill.

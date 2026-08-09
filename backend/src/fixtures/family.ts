@@ -33,6 +33,7 @@ export const FAMILY: FamilyMember[] = [
     location: { lat: 34.0709, lng: -118.5556 },
     profile: { mobility: 'standard', hasCar: true, householdSize: 1 },
     situation: 'Healthy adult, car in the driveway, can leave in a few minutes.',
+    essentials: ['Documents folder', 'Phone + charger'],
   },
   {
     id: 'grandma',
@@ -44,6 +45,7 @@ export const FAMILY: FamilyMember[] = [
     profile: { mobility: 'vulnerable', hasCar: true, householdSize: 1, hasPets: true },
     situation:
       'Eighty-one, uses a walker and is on oxygen. Drives, but slowly, and needs help loading the tank. Has a cat.',
+    essentials: ['Oxygen tank', 'Morning medications', 'Walker', 'Cat + carrier'],
   },
   {
     id: 'kids',
@@ -54,6 +56,7 @@ export const FAMILY: FamilyMember[] = [
     // No car, and children move as a group at the pace of the slowest.
     profile: { mobility: 'vulnerable', hasCar: false, householdSize: 2 },
     situation: 'Both at school, no vehicle. Cannot leave until an adult reaches them.',
+    essentials: ["Maya's EpiPen", "Sam's inhaler"],
   },
   {
     id: 'uncle',
@@ -64,6 +67,7 @@ export const FAMILY: FamilyMember[] = [
     location: { lat: 34.0522, lng: -118.4712 },
     profile: { mobility: 'standard', hasCar: true, householdSize: 2 },
     situation: 'Across town in Brentwood with a car. Can drive to collect someone.',
+    essentials: ['First-aid kit'],
   },
 ];
 

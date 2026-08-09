@@ -139,6 +139,7 @@ export async function runAssessment(req: ParsedAssessRequest): Promise<AssessRes
       tuning,
       address: geo.data.formattedAddress,
       forceOffline: req.forceOffline,
+      fastVerdict: req.fastVerdict,
     },
     trace,
   );

@@ -565,6 +565,12 @@ export interface FamilyMember {
   profile: UserProfile;
   /** The human sentence this profile came from. Shown in the UI as provenance. */
   situation?: string;
+  /**
+   * The things this person CANNOT leave without — oxygen tank, EpiPen, meds,
+   * the cat. Surfaced as a grab-list in the escape plan's "get out the door"
+   * step, because forgetting the EpiPen means going back into the smoke.
+   */
+  essentials?: string[];
 }
 
 export interface FamilyMemberAssessment {
@@ -626,6 +632,13 @@ export interface AssessRequest {
   scenarioId?: string;
   /** Demo switch: skip every network call and run purely on canned data. */
   forceOffline?: boolean;
+  /**
+   * Skip the language-model prose pass and answer with the deterministic
+   * template immediately. Used for field-report re-runs: when someone says a
+   * road is blocked, the re-judged routes should appear in seconds — polish
+   * can wait, the decision cannot.
+   */
+  fastVerdict?: boolean;
   /**
    * Free-text situation reports gathered so far, oldest first. Each is parsed by
    * Claude into structured facts, geometrically verified, and folded into the

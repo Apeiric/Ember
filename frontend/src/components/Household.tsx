@@ -149,6 +149,11 @@ function MemberRow({
             {member.situation}
           </p>
         )}
+        {(member.essentials?.length ?? 0) > 0 && (
+          <p className="mt-1 pl-4 text-[0.63rem] leading-snug text-caution-300">
+            Grab: {member.essentials!.join(' · ')}
+          </p>
+        )}
       </button>
 
       <button
@@ -181,6 +186,7 @@ function MemberForm({
     mobility: member.profile.mobility,
     hasCar: member.profile.hasCar,
     situation: member.situation ?? '',
+    essentials: (member.essentials ?? []).join(', '),
   });
   const set = <K extends keyof MemberEdit>(k: K, v: MemberEdit[K]) =>
     setEdit((p) => ({ ...p, [k]: v }));
@@ -243,6 +249,13 @@ function MemberForm({
         value={edit.situation}
         onChange={(v) => set('situation', v)}
         placeholder="Needs an oxygen tank. Has a cat."
+      />
+
+      <Field
+        label="Can't leave without (comma-separated)"
+        value={edit.essentials}
+        onChange={(v) => set('essentials', v)}
+        placeholder="Oxygen tank, EpiPen, medications, cat"
       />
 
       <div className="flex items-center gap-2 pt-0.5">

@@ -53,6 +53,7 @@ export interface VerdictInput {
   tuning: ProfileTuning;
   address: string;
   forceOffline?: boolean;
+  fastVerdict?: boolean;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -175,6 +176,22 @@ export async function writeVerdict(
 ): Promise<RouteVerdict> {
   const facts = computeFacts(input);
   const offline = isOffline(input.forceOffline);
+
+  // Field-report re-runs want the re-judged answer NOW. The decision is
+  // already made deterministically; skipping the prose pass turns a ~10 s
+  // response into a ~2 s one, and the template says the same thing stiffly.
+  if (input.fastVerdict) {
+    trace.record({
+      name: 'verdict',
+      status: 'ok',
+      ms: 0,
+      source: 'canned',
+      provider: 'Deterministic template (fast rerun)',
+      note: 'Prose pass skipped so a report re-judges in seconds.',
+    });
+    return assemble(input, facts, null, 'template');
+  }
+
   const prompt = buildPrompt(input, facts);
 
   const strategies: Strategy<RouteVerdict>[] = [

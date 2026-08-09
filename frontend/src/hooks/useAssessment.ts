@@ -26,6 +26,8 @@ export interface RunOptions {
   forceOffline?: boolean;
   /** Situation reports gathered so far, oldest first. */
   reports?: string[];
+  /** Skip the LLM prose pass — instant deterministic re-judgement. */
+  fastVerdict?: boolean;
 }
 
 export function useAssessment() {
@@ -59,6 +61,7 @@ export function useAssessment() {
           scenarioId: options.scenarioId,
           forceOffline: options.forceOffline,
           reports: options.reports,
+          fastVerdict: options.fastVerdict,
         },
         controller.signal,
       );
@@ -100,7 +103,9 @@ export function useAssessment() {
     (text: string) => {
       const last = lastRequest.current;
       if (!last) return;
-      void run({ ...last, reports: [...(last.reports ?? []), text] });
+      // A blocked-road report must re-judge INSTANTLY. The routes are already
+      // computed — skip the prose pass and show the deterministic answer now.
+      void run({ ...last, reports: [...(last.reports ?? []), text], fastVerdict: true });
     },
     [run],
   );
