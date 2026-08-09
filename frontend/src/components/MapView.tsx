@@ -142,6 +142,12 @@ export function MapView({ data, members = [], activeId = null, onSelectMember, o
       });
 
       map.current = instance;
+      // Tab remounts race layout: the map can initialise into a zero-sized
+      // container, after which every camera calculation uses the wrong canvas.
+      // Observe the container and keep the canvas honest.
+      const ro = new ResizeObserver(() => instance.resize());
+      ro.observe(container.current);
+      instance.once('remove', () => ro.disconnect());
       // Dev-only handle so tests can project coordinates and drive clicks.
       if (import.meta.env.DEV) {
         (window as unknown as Record<string, unknown>).__emberMap = instance;
@@ -356,6 +362,9 @@ export function MapView({ data, members = [], activeId = null, onSelectMember, o
         ),
     ];
     if (points.length > 0) {
+      // The container may have been resized (or born) since the last paint —
+      // fitBounds with a stale canvas size frames the wrong world.
+      instance.resize();
       const bounds = points.reduce(
         (b, p) => b.extend([p.lng, p.lat]),
         new mapboxgl.LngLatBounds(

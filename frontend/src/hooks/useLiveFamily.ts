@@ -66,6 +66,13 @@ interface Track {
   name: string;
   hasCar: boolean;
   sheltering: boolean;
+  /**
+   * 'self' is THIS device. The simulation animates everyone else's phone;
+   * yours is never simulated — it sits at your address until real
+   * watchPosition fixes replace it. A sim that moves "you" while you sit
+   * still reads as a lie, because it is one.
+   */
+  isSelf: boolean;
   /** The person who cannot leave alone (no car) — the pickup target. */
   needsPickup: boolean;
   path: LatLng[]; // their assessed evacuation route (may be empty)
@@ -110,6 +117,7 @@ export function useLiveFamily(onPositions: (positions: Record<string, LatLng>) =
         id: m.member.id,
         name: m.member.name,
         hasCar: m.member.profile.hasCar,
+        isSelf: m.member.id === 'self',
         sheltering: m.verdict.decision === 'SHELTER_IN_PLACE' && m.member.profile.hasCar,
         needsPickup: !m.member.profile.hasCar,
         path,
@@ -185,7 +193,7 @@ export function useLiveFamily(onPositions: (positions: Record<string, LatLng>) =
             etaMinutes: Math.round(chosen.rawEtaMin),
             reason:
               chosen.t.id !== 'self' && selfCand && selfCand.rawEtaMin < chosen.rawEtaMin
-                ? `You are nearer on the map, but a U-turn mid-escape costs ~${SELF_DIVERT_PENALTY_MIN} min — ${chosen.t.name} covers it without breaking anyone's route.`
+                ? `You are nearer on the map, but the detour spends ~${SELF_DIVERT_PENALTY_MIN} min of your own escape window — ${chosen.t.name} covers it without costing anyone theirs.`
                 : `Closest adult with a car, recomputed live.`,
           };
 
@@ -211,7 +219,7 @@ export function useLiveFamily(onPositions: (positions: Record<string, LatLng>) =
       // ── advance the movers ────────────────────────────────────────────
       const assignee = currentAssignee.current;
       for (const t of tracks.current) {
-        if (t.needsPickup || t.sheltering) continue;
+        if (t.needsPickup || t.sheltering || t.isSelf) continue;
         if (t.id === assignee && target) {
           // The assigned adult drives TOWARD the target, not to safety.
           if (t.pickupStartKm === undefined) t.pickupStartKm = kmBetween(t.pos, target.pos);
@@ -251,6 +259,14 @@ export function useLiveFamily(onPositions: (positions: Record<string, LatLng>) =
               km < 0.3
                 ? `At the school with ${target.name}`
                 : `Driving to ${target.name} — ${km.toFixed(1)} km · ~${Math.max(1, Math.round((km / DRIVE_KPH) * 60))} min`,
+          };
+        }
+        if (t.isSelf) {
+          return {
+            id: t.id,
+            name: t.name,
+            phase: 'moving',
+            text: 'This device — position is real, never simulated',
           };
         }
         const leftKm = Math.max(0, t.totalKm - t.distAlongKm);

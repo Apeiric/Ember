@@ -299,8 +299,9 @@ function EscapeTab({
           )}
 
           {data?.naive?.rating === 'REJECTED' && data.verdict.rejectedSummary && (
-            <div className="rise rounded-xl border border-alarm-500/50 bg-alarm-500/15 px-4 py-3">
-              <p className="text-[0.62rem] font-bold uppercase tracking-[0.14em] text-alarm-300">
+            <div className="rise relative overflow-hidden rounded-xl border border-white/[0.08] bg-ash-900/95 px-4 py-3 pl-5">
+              <span className="absolute inset-y-0 left-0 w-[3px] bg-alarm-500" />
+              <p className="text-[0.62rem] font-bold uppercase tracking-[0.14em] text-alarm-400">
                 We did not send you this way
               </p>
               <p className="mt-1 text-[0.82rem] leading-snug text-ash-100">
