@@ -29,6 +29,7 @@ import { HazardSummary } from './components/HazardSummary';
 import { Household } from './components/Household';
 import { MapView } from './components/MapView';
 import { RouteList } from './components/RouteList';
+import { RoutePlan } from './components/RoutePlan';
 import { TracePanel } from './components/TracePanel';
 import { VerdictHero } from './components/VerdictHero';
 
@@ -134,7 +135,7 @@ export default function App() {
       </div>
 
       {/* ── The rail ───────────────────────────────────────────────────── */}
-      <div className="relative flex min-h-0 flex-1 flex-col lg:pointer-events-none lg:absolute lg:inset-0 lg:flex-row">
+      <div className="relative z-30 flex min-h-0 flex-1 flex-col lg:pointer-events-none lg:absolute lg:inset-0 lg:flex-row">
         <div className="scroll-thin pointer-events-auto min-h-0 flex-1 space-y-3 overflow-y-auto bg-ash-950 p-3 lg:m-3 lg:w-[28rem] lg:flex-none lg:bg-transparent lg:p-0">
           <Header scenarioId={scenarioId} onFamily={() => setView('family')} hasData={Boolean(data)} />
 
@@ -158,6 +159,9 @@ export default function App() {
               </p>
             </div>
           )}
+
+          {/* The whole escape, step by step — not just the next turn. */}
+          {data?.recommended && <RoutePlan recommended={data.recommended} tuning={data.tuning} />}
 
           {!data && !error && <Intro />}
 
@@ -203,7 +207,7 @@ export default function App() {
                 <span className="flex items-center gap-2 text-[0.66rem] text-ash-300">
                   {data.routes.filter((r) => r.rating === 'REJECTED').length} route
                   {data.routes.filter((r) => r.rating === 'REJECTED').length === 1 ? '' : 's'} rejected
-                  <span className="text-ash-600 transition-transform group-open:rotate-90">›</span>
+                  <span className="text-ash-400 transition-transform group-open:rotate-90">›</span>
                 </span>
               </summary>
               <div className="space-y-3 border-t border-ash-700/60 p-3">

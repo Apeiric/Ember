@@ -45,7 +45,7 @@ export function TracePanel({ trace }: { trace: Trace }) {
             </span>
           )}
           {trace.totalMs}ms
-          <span className="text-ash-600 transition-transform group-open:rotate-90">›</span>
+          <span className="text-ash-400 transition-transform group-open:rotate-90">›</span>
         </span>
       </summary>
 
@@ -63,18 +63,18 @@ export function TracePanel({ trace }: { trace: Trace }) {
                 {/* Relative-duration bar — spot the slow stage at a glance. */}
                 <span className="h-1 flex-1 overflow-hidden rounded-full bg-ash-800">
                   <span
-                    className={`block h-full rounded-full ${style.dot} opacity-60`}
+                    className={`block h-full rounded-full ${style.dot} opacity-90`}
                     style={{ width: `${Math.max(2, (stage.ms / slowest) * 100)}%` }}
                   />
                 </span>
 
-                <span className="w-10 shrink-0 text-right font-mono text-[0.64rem] text-ash-500">
+                <span className="w-10 shrink-0 text-right font-mono text-[0.64rem] text-ash-300">
                   {stage.ms}ms
                 </span>
               </div>
 
               {(stage.provider || stage.note || stage.error) && (
-                <div className="ml-[7.6rem] mt-0.5 truncate text-[0.62rem] text-ash-500">
+                <div className="ml-[7.6rem] mt-0.5 truncate text-[0.62rem] text-ash-300">
                   {stage.provider && <span className={style.text}>{stage.provider}</span>}
                   {stage.error && <span className="text-alarm-400"> — {stage.error}</span>}
                   {stage.note && <span> — {stage.note}</span>}

@@ -13,14 +13,65 @@
 
 import type { EvacuationZone, RoadClosure } from '@ember/shared';
 
+// Northbound PCH beyond the Sunset junction — the Topanga escape. Chained in
+// segments that TRACE THE REAL ROAD (from the same Google geometry as the
+// routes): a single straight from→to chord cuts the corner of the coast road
+// and its 130 m block blobs miss the pavement entirely.
 export const CANNED_CLOSURES: RoadClosure[] = [
   {
-    id: 'canned-pch-topanga',
+    id: 'canned-pch-topanga-0',
     road: 'SR-1',
     description: 'Pacific Coast Hwy at Topanga Canyon Blvd',
-    // Northbound PCH beyond the Sunset junction — the Topanga escape.
-    from: { lat: 34.0375, lng: -118.575 },
-    to: { lat: 34.036, lng: -118.605 },
+    from: { lat: 34.04195, lng: -118.57165 },
+    to: { lat: 34.04016, lng: -118.57844 },
+    reason: 'Fire activity adjacent to roadway',
+    facility: 'Mainline',
+    startsAt: '2025-01-08T01:40:00.000Z',
+    endsAt: null,
+    indefinite: true,
+  },
+  {
+    id: 'canned-pch-topanga-1',
+    road: 'SR-1',
+    description: 'Pacific Coast Hwy at Topanga Canyon Blvd',
+    from: { lat: 34.04016, lng: -118.57844 },
+    to: { lat: 34.03877, lng: -118.58476 },
+    reason: 'Fire activity adjacent to roadway',
+    facility: 'Mainline',
+    startsAt: '2025-01-08T01:40:00.000Z',
+    endsAt: null,
+    indefinite: true,
+  },
+  {
+    id: 'canned-pch-topanga-2',
+    road: 'SR-1',
+    description: 'Pacific Coast Hwy at Topanga Canyon Blvd',
+    from: { lat: 34.03877, lng: -118.58476 },
+    to: { lat: 34.03991, lng: -118.59325 },
+    reason: 'Fire activity adjacent to roadway',
+    facility: 'Mainline',
+    startsAt: '2025-01-08T01:40:00.000Z',
+    endsAt: null,
+    indefinite: true,
+  },
+  {
+    id: 'canned-pch-topanga-3',
+    road: 'SR-1',
+    description: 'Pacific Coast Hwy at Topanga Canyon Blvd',
+    from: { lat: 34.03991, lng: -118.59325 },
+    to: { lat: 34.03945, lng: -118.60322 },
+    reason: 'Fire activity adjacent to roadway',
+    facility: 'Mainline',
+    startsAt: '2025-01-08T01:40:00.000Z',
+    endsAt: null,
+    indefinite: true,
+  },
+  {
+    id: 'canned-pch-topanga-4',
+    road: 'SR-1',
+    description: 'Pacific Coast Hwy at Topanga Canyon Blvd',
+    from: { lat: 34.03945, lng: -118.60322 },
+    to: { lat: 34.03854, lng: -118.60634 },
     reason: 'Fire activity adjacent to roadway',
     facility: 'Mainline',
     startsAt: '2025-01-08T01:40:00.000Z',

@@ -307,7 +307,7 @@ export function Scene3D({ data, onExit }: { data: AssessResponse | null; onExit:
           <div className="text-center">
             <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-2 border-ember-500/30 border-t-ember-400" />
             <p className="text-sm text-ash-300">Loading 3D scene…</p>
-            <p className="mt-1 text-[0.68rem] text-ash-500">{detail}</p>
+            <p className="mt-1 text-[0.68rem] text-ash-300">{detail}</p>
           </div>
         </div>
       )}

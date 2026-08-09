@@ -87,6 +87,9 @@ export function MapView({ data, members = [], activeId = null, onSelectMember }:
         center: [-118.5265, 34.0464],
         zoom: 11,
         attributionControl: false,
+        // Bottom-LEFT would sit underneath the side rail and silently swallow
+        // clicks meant for panel buttons (mapbox controls are z-index:2).
+        logoPosition: 'bottom-right',
         // The demo is a fixed camera move; spinning the globe is a distraction.
         dragRotate: false,
       });

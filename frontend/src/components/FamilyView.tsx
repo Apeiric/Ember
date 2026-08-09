@@ -86,7 +86,7 @@ export function FamilyView({ onExit }: { onExit: () => void }) {
         ))}
       </div>
 
-      <p className="mt-3 px-1 text-[0.62rem] leading-snug text-ash-600">
+      <p className="mt-3 px-1 text-[0.62rem] leading-snug text-ash-400">
         Same fire, same engine, four different answers — the difference is how fast each person can
         actually move. Demo household on the reconstructed {data.hazard.name}.
       </p>
@@ -143,7 +143,7 @@ function PersonCard({ assessment }: { assessment: FamilyMemberAssessment }) {
 
           {/* Why this person's answer differs — the accessibility point, stated. */}
           {member.situation && (
-            <p className="mt-2 border-t border-ash-700/60 pt-2 text-[0.68rem] leading-snug text-ash-500">
+            <p className="mt-2 border-t border-ash-700/60 pt-2 text-[0.68rem] leading-snug text-ash-300">
               {member.situation}
             </p>
           )}
@@ -160,7 +160,7 @@ function Stat({ value, unit, label }: { value: string; unit: string; label: stri
         <span className="text-xl font-black leading-none text-ash-100">{value}</span>
         {unit && <span className="text-[0.7rem] text-ash-400">{unit}</span>}
       </div>
-      <div className="text-[0.58rem] uppercase tracking-wider text-ash-500">{label}</div>
+      <div className="text-[0.58rem] uppercase tracking-wider text-ash-300">{label}</div>
     </div>
   );
 }

@@ -40,7 +40,7 @@ export function VerdictCard({ verdict, recommended, naive }: Props) {
       {/* ── THE INSTRUCTION ────────────────────────────────────────────── */}
       <div className="px-5 pb-4 pt-5 sm:px-6">
         <div className="flex items-start justify-between gap-3">
-          <span className="label !text-white/60">Verdict</span>
+          <span className="label !text-white/85">Verdict</span>
           <span className="rounded-full border border-white/20 bg-black/20 px-2 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wider text-white/70">
             {verdict.confidence} confidence
           </span>
@@ -56,7 +56,7 @@ export function VerdictCard({ verdict, recommended, naive }: Props) {
         <p className="mt-2 text-[0.95rem] font-medium leading-snug text-white/90">
           {verdict.subhead}
         </p>
-        <p className="mt-1 text-xs text-white/60">{style.kicker}</p>
+        <p className="mt-1 text-xs text-white/85">{style.kicker}</p>
       </div>
 
       {/* ── DIRECTION + COUNTDOWN ──────────────────────────────────────── */}
@@ -64,7 +64,7 @@ export function VerdictCard({ verdict, recommended, naive }: Props) {
         {/* min-w-0: grid children default to min-width:auto, so a long word like
             SOUTHEAST would otherwise blow past the column into the countdown. */}
         <div className="min-w-0 bg-black/30 px-5 py-4 sm:px-6">
-          <div className="label !text-white/50">Go</div>
+          <div className="label !text-white/80">Go</div>
           <div className="mt-1 flex items-center gap-1.5">
             {verdict.direction && <CompassArrow direction={verdict.direction} />}
             <span className="min-w-0 text-lg font-black uppercase leading-none tracking-tight text-white sm:text-xl">
@@ -72,24 +72,24 @@ export function VerdictCard({ verdict, recommended, naive }: Props) {
             </span>
           </div>
           {recommended && (
-            <div className="mt-1 truncate text-[0.7rem] text-white/60">
+            <div className="mt-1 truncate text-[0.7rem] text-white/85">
               {recommended.route.destination.name}
             </div>
           )}
         </div>
 
         <div className="min-w-0 bg-black/30 px-5 py-4 sm:px-6">
-          <div className="label !text-white/50">Leave within</div>
+          <div className="label !text-white/80">Leave within</div>
           <div className="mt-1 flex items-baseline gap-1.5">
             <span className="text-countdown font-black tabular-nums text-white">
               {countdown.value}
             </span>
             {countdown.unit && (
-              <span className="text-lg font-bold uppercase text-white/60">{countdown.unit}</span>
+              <span className="text-lg font-bold uppercase text-white/85">{countdown.unit}</span>
             )}
           </div>
           {verdict.minutesUntilCutoff != null && (
-            <div className="mt-1 text-[0.7rem] text-white/60">
+            <div className="mt-1 text-[0.7rem] text-white/85">
               road cut off in ~{formatMinutes(verdict.minutesUntilCutoff)}
             </div>
           )}
@@ -125,15 +125,15 @@ export function VerdictCard({ verdict, recommended, naive }: Props) {
       {/* ── PERSONALIZATION + PROVENANCE ───────────────────────────────── */}
       <div className="space-y-2 bg-black/40 px-5 py-3 sm:px-6">
         {verdict.profileNote && (
-          <p className="text-[0.72rem] leading-snug text-white/60">
-            <span className="font-semibold uppercase tracking-wider text-white/50">
+          <p className="text-[0.72rem] leading-snug text-white/85">
+            <span className="font-semibold uppercase tracking-wider text-white/80">
               Personalized ·{' '}
             </span>
             {verdict.profileNote}
           </p>
         )}
         <details className="group">
-          <summary className="cursor-pointer list-none text-[0.66rem] uppercase tracking-[0.14em] text-white/40 transition-colors hover:text-white/70">
+          <summary className="cursor-pointer list-none text-[0.66rem] uppercase tracking-[0.14em] text-white/75 transition-colors hover:text-white/70">
             Sources ({verdict.citations.length}) · written by {verdict.generatedBy}
           </summary>
           <ul className="mt-2 space-y-1">
