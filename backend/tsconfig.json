@@ -1,0 +1,13 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2022"],
+    "types": ["node", "vitest/globals"],
+    "baseUrl": ".",
+    "paths": {
+      "@ember/shared": ["../shared/src/index.ts"],
+      "@ember/shared/*": ["../shared/src/*"]
+    }
+  },
+  "include": ["src/**/*.ts", "../shared/src/**/*.ts", "tsup.config.ts", "vitest.config.ts"]
+}

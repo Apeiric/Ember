@@ -1,0 +1,4 @@
+{
+  "//": "Not an npm workspace — this file exists solely to mark shared/src as ESM. Without it Node walks up to the root package.json (no \"type\" field), loads these files as CommonJS, and `export *` silently loses its named bindings when the ESM backend imports them.",
+  "type": "module"
+}

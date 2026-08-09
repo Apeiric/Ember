@@ -1,0 +1,62 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-ash-950 text-ash-100 antialiased;
+    font-feature-settings: 'ss01', 'cv01';
+    overscroll-behavior: none;
+  }
+
+  /* Mapbox injects its own controls; keep them from looking like a different app. */
+  .mapboxgl-ctrl-logo,
+  .mapboxgl-ctrl-attrib {
+    opacity: 0.35;
+  }
+}
+
+@layer components {
+  .panel {
+    @apply rounded-2xl border border-ash-700/70 bg-ash-900/85 backdrop-blur-xl;
+  }
+
+  .label {
+    @apply text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ash-400;
+  }
+
+  /* Thin scrollbars — the side rail scrolls a lot during a demo. */
+  .scroll-thin {
+    scrollbar-width: thin;
+    scrollbar-color: theme('colors.ash.600') transparent;
+  }
+  .scroll-thin::-webkit-scrollbar {
+    width: 6px;
+  }
+  .scroll-thin::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-ash-600;
+  }
+}
+
+/* Respect the setting. An emergency UI that triggers vestibular symptoms is a
+   worse emergency UI — and a judge with reduced-motion on should still see a
+   product that works. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

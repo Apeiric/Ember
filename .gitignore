@@ -1,0 +1,17 @@
+node_modules/
+dist/
+build/
+.DS_Store
+*.log
+npm-debug.log*
+
+# Secrets — NEVER commit. Use .env.local locally, Render env vars in prod.
+.env
+.env.local
+.env.*.local
+
+# Tooling
+.vite/
+coverage/
+*.tsbuildinfo
+.eslintcache

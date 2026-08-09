@@ -1,0 +1,78 @@
+# EMBER — Render blueprint. CONTEXT.md §8.
+#
+# "Deploy a skeleton to Render in HOUR 1, push all day."
+#
+# Setup:
+#   1. Push this repo to GitHub.
+#   2. Render dashboard → New → Blueprint → point at the repo.
+#   3. Set the secrets in each service's Environment tab (they are marked
+#      sync:false below, so Render prompts for them and never stores them here).
+#
+# ⚠️  EVERY SECRET IS OPTIONAL. Deploy with none of them set and the app still
+#     works end to end on canned demo data. Add keys as they arrive.
+
+services:
+  # ── API ───────────────────────────────────────────────────────────────────
+  - type: web
+    name: ember-api
+    runtime: node
+    plan: free
+    region: oregon
+    # Build from the repo root so the workspace and shared/ come along.
+    buildCommand: npm ci && npm run build --workspace @ember/backend
+    startCommand: node backend/dist/server.js
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: 20.11.0
+      # Lock this down to the static site's URL once it exists.
+      - key: CORS_ORIGINS
+        sync: false
+
+      # Secrets — set in the dashboard, never in this file.
+      - key: GOOGLE_MAPS_API_KEY
+        sync: false
+      - key: NASA_FIRMS_API_KEY
+        sync: false
+      - key: MIREYE_API_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+
+      - key: ANTHROPIC_MODEL
+        value: claude-opus-5
+      - key: EMBER_DEFAULT_SCENARIO
+        value: palisades-2025
+      # Flip to true from the dashboard for a guaranteed-offline demo.
+      - key: EMBER_FORCE_OFFLINE
+        value: false
+
+  # ── Web ───────────────────────────────────────────────────────────────────
+  - type: web
+    name: ember-web
+    runtime: static
+    buildCommand: npm ci && npm run build --workspace @ember/frontend
+    staticPublishPath: frontend/dist
+    autoDeploy: true
+    envVars:
+      # Point at the API service above, e.g. https://ember-api.onrender.com
+      - key: VITE_API_URL
+        sync: false
+      # Public Mapbox token (pk.*). Without it the app renders the token-free
+      # schematic map instead — degraded, but never broken.
+      - key: VITE_MAPBOX_TOKEN
+        sync: false
+    routes:
+      # SPA fallback so a deep link does not 404.
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    headers:
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff

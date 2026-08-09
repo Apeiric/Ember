@@ -1,0 +1,26 @@
+{
+  "name": "ember",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Ember — the safe way out of a wildfire.",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "engines": {
+    "node": ">=20.11"
+  },
+  "scripts": {
+    "dev": "concurrently -n api,web -c magenta,cyan \"npm:dev:api\" \"npm:dev:web\"",
+    "dev:api": "npm run dev --workspace @ember/backend",
+    "dev:web": "npm run dev --workspace @ember/frontend",
+    "build": "npm run build --workspace @ember/backend && npm run build --workspace @ember/frontend",
+    "start": "npm run start --workspace @ember/backend",
+    "test": "npm run test --workspace @ember/backend",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "typescript": "^5.7.3"
+  }
+}
