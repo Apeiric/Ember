@@ -169,7 +169,7 @@ export const PALISADES_ROUTES: Route[] = [
     id: 'pal-route-405',
     summary: 'Palisades Dr → Sunset Blvd east → I-405',
     legs: [
-      { path: PALISADES_DRIVE, durationMinutes: 6 },
+      { path: PALISADES_DRIVE, durationMinutes: 6, roadName: 'Palisades Dr' },
       {
         // Sunset curves northeast through Brentwood toward the 405 at the Getty.
         // That is where the freeway actually is — and it is straight back up
@@ -184,6 +184,7 @@ export const PALISADES_ROUTES: Route[] = [
           { lat: 34.0805, lng: -118.4755 },
         ],
         durationMinutes: 13,
+        roadName: 'Sunset Blvd',
       },
     ],
     destination: {
@@ -202,7 +203,7 @@ export const PALISADES_ROUTES: Route[] = [
     id: 'pal-route-pch-south',
     summary: 'Palisades Dr → Sunset west → PCH south → Santa Monica',
     legs: [
-      { path: PALISADES_DRIVE, durationMinutes: 6 },
+      { path: PALISADES_DRIVE, durationMinutes: 6, roadName: 'Palisades Dr' },
       {
         path: [
           { lat: 34.0538, lng: -118.551 },
@@ -211,6 +212,7 @@ export const PALISADES_ROUTES: Route[] = [
           { lat: 34.038, lng: -118.559 },
         ],
         durationMinutes: 4,
+        roadName: 'Sunset Blvd',
       },
       {
         path: [
@@ -222,6 +224,7 @@ export const PALISADES_ROUTES: Route[] = [
           { lat: 34.0195, lng: -118.4912 },
         ],
         durationMinutes: 12,
+        roadName: 'PCH south',
       },
     ],
     destination: {
@@ -240,7 +243,7 @@ export const PALISADES_ROUTES: Route[] = [
     id: 'pal-route-pch-north',
     summary: 'Palisades Dr → Sunset west → PCH north → Topanga',
     legs: [
-      { path: PALISADES_DRIVE, durationMinutes: 6 },
+      { path: PALISADES_DRIVE, durationMinutes: 6, roadName: 'Palisades Dr' },
       {
         path: [
           { lat: 34.0538, lng: -118.551 },
@@ -249,6 +252,7 @@ export const PALISADES_ROUTES: Route[] = [
           { lat: 34.038, lng: -118.559 },
         ],
         durationMinutes: 4,
+        roadName: 'Sunset Blvd',
       },
       {
         path: [
@@ -258,6 +262,7 @@ export const PALISADES_ROUTES: Route[] = [
           { lat: 34.036, lng: -118.605 },
         ],
         durationMinutes: 11,
+        roadName: 'PCH north',
       },
     ],
     destination: {

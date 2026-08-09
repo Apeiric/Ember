@@ -176,7 +176,11 @@ async function fetchNifcPerimeter(
 
       const p = best.feature.properties;
       return {
-        id: String(p.poly_GlobalID ?? p.attr_UniqueFireIdentifier ?? `nifc-${Date.now()}`),
+        // attr_UniqueFireIdentifier is the one WFIGS actually populates;
+        // poly_GlobalID is absent on this layer. Keep both — the schema moves.
+        id: String(
+          p.attr_UniqueFireIdentifier ?? p.poly_IRWINID ?? p.poly_GlobalID ?? `nifc-${Date.now()}`,
+        ),
         name: String(p.attr_IncidentName ?? p.poly_IncidentName ?? 'Active wildfire'),
         polygons: best.polygons,
         discoveredAt: toIso(p.attr_FireDiscoveryDateTime) ?? new Date().toISOString(),
@@ -299,8 +303,8 @@ interface NwsStationsResponse {
 }
 interface NwsObservationResponse {
   properties: {
-    windSpeed?: { value: number | null };
-    windGust?: { value: number | null };
+    windSpeed?: { value: number | null; unitCode?: string };
+    windGust?: { value: number | null; unitCode?: string };
     windDirection?: { value: number | null };
     timestamp?: string;
     station?: string;
@@ -328,14 +332,22 @@ async function fetchNwsWind(location: LatLng, signal: AbortSignal): Promise<Wind
         signal,
       );
       const p = obs.properties;
-      const speedKph = p.windSpeed?.value;
+      const rawSpeed = p.windSpeed?.value;
       const fromDeg = p.windDirection?.value;
-      if (speedKph == null || fromDeg == null) return null;
+      if (rawSpeed == null || fromDeg == null) return null;
+
+      // NWS usually reports wmoUnit:km_h-1, but some stations report m/s.
+      // Trusting the number without reading unitCode understates a 40 km/h wind
+      // as 40 m/s — or vice versa — and the whole projection scales off it.
+      const toKph = (v: number, unitCode?: string): number =>
+        /m_s|m\/s/i.test(unitCode ?? '') ? v * 3.6 : v;
 
       return {
-        // NWS reports km/h already for windSpeed under the default unit system.
-        speedKph: Math.round(speedKph),
-        gustKph: p.windGust?.value != null ? Math.round(p.windGust.value) : undefined,
+        speedKph: Math.round(toKph(rawSpeed, p.windSpeed?.unitCode)),
+        gustKph:
+          p.windGust?.value != null
+            ? Math.round(toKph(p.windGust.value, p.windGust.unitCode))
+            : undefined,
         fromDeg: normalizeBearing(fromDeg),
         // Fire travels the way the wind BLOWS, which is 180° from where it blows FROM.
         // Getting this backwards inverts the entire projection — do not "simplify" it.

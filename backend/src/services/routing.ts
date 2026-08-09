@@ -20,6 +20,7 @@ import type {
   DangerField,
   Destination,
   LatLng,
+  Provenance,
   Route,
   Sourced,
 } from '@ember/shared';
@@ -28,6 +29,7 @@ import {
   compassFromBearing,
   decodePolyline,
   destination as pointAtBearing,
+  haversineKm,
   normalizeBearing,
 } from '../core/geo';
 import { buildRoute } from '../core/routes';
@@ -54,7 +56,12 @@ export async function fetchRoutes(
     {
       name: 'Google Directions (alternatives)',
       source: 'live',
-      enabled: Boolean(env.googleMapsKey) && !offline,
+      // Same rule as geocode, hazards and ground: a pinned scenario is fully
+      // canned. Live routes against a canned fire replace the hand-tuned
+      // geometry the demo depends on — the rejected-fastest-route moment is a
+      // property of THOSE roads against THAT projection, and swapping in
+      // today's traffic quietly deletes it.
+      enabled: Boolean(env.googleMapsKey) && !offline && !query.scenarioId,
       timeoutMs: TIMEOUTS_MS.directions,
       note: 'Traffic-optimised routes, unfiltered — the judge does the rejecting.',
       run: async (signal) => {
@@ -70,21 +77,49 @@ export async function fetchRoutes(
           .filter((r): r is PromiseFulfilledResult<Route[]> => r.status === 'fulfilled')
           .flatMap((r) => r.value);
 
-        if (routes.length === 0) throw new Error('Google returned no usable routes');
+        if (routes.length === 0) {
+          // Surface WHY every leg failed. "no usable routes" on its own sends
+          // you hunting through code when the real answer is one HTTP message.
+          const reasons = results
+            .filter((r): r is PromiseRejectedResult => r.status === 'rejected')
+            .map((r) => (r.reason instanceof Error ? r.reason.message : String(r.reason)));
+          const unique = [...new Set(reasons)];
+          throw new Error(
+            `Google returned no usable routes — ${unique.join(' | ') || 'all destinations empty'}`,
+          );
+        }
         return dedupe(routes);
       },
     },
 
-    // ── LAST RESORT. MUST NOT FAIL. ─────────────────────────────────────────
     {
+      // Canned routes are only meaningful for the scenario they were drawn for.
+      // Serving Palisades geometry for a live fire 80 km away would draw roads
+      // that do not touch the user's actual address — a coherent-looking map
+      // that is quietly lying. Only use them when the hazard really is that
+      // scenario, or the caller explicitly pinned one.
       name: 'Canned scenario routes',
       source: 'canned',
+      enabled: Boolean(scenarioForHazard(query.field.hazardId) ?? query.scenarioId),
       note: 'Route geometry from the matching demo scenario.',
       run: async () => {
         const scenario =
           scenarioForHazard(query.field.hazardId) ?? getScenario(query.scenarioId);
         return scenario.routes;
       },
+    },
+
+    // ── LAST RESORT. MUST NOT FAIL. ─────────────────────────────────────────
+    {
+      // No routing provider and no matching scenario. Draw straight-line escape
+      // corridors from the REAL origin so the geometry is at least self-
+      // consistent with the address and the fire we actually loaded.
+      //
+      // These are NOT roads. Marked `mock` so the UI badge says so out loud.
+      name: 'Straight-line corridors (no routing provider)',
+      source: 'mock',
+      note: 'Direct bearings from the address — NOT real roads. Distances and times are estimates.',
+      run: async () => straightLineCorridors(query.origin, query.field),
     },
   ];
 
@@ -133,7 +168,12 @@ interface GoogleDirectionsResponse {
       distance?: { value: number };
       duration?: { value: number };
       duration_in_traffic?: { value: number };
-      steps?: { polyline?: { points: string }; duration?: { value: number } }[];
+      steps?: {
+        polyline?: { points: string };
+        duration?: { value: number };
+        /** e.g. `Turn <b>right</b> onto <b>Sunset Blvd</b>` */
+        html_instructions?: string;
+      }[];
     }[];
   }[];
 }
@@ -176,6 +216,9 @@ async function fetchDirections(
         return steps.map((step) => ({
           path: decodePolyline(step.polyline?.points ?? ''),
           durationMinutes: (step.duration?.value ?? 0) / 60,
+          // Road name per step, so a field report naming a road resolves to
+          // specific segments instead of the whole trip.
+          roadName: roadNameFromInstruction(step.html_instructions),
         }));
       });
 
@@ -194,6 +237,72 @@ async function fetchDirections(
     });
   });
 }
+
+/**
+ * Pull the road name out of a Google step instruction.
+ *
+ * Instructions look like `Turn <b>right</b> onto <b>Sunset Blvd</b>` or
+ * `Merge onto <b>I-405 N</b>`. The road is the LAST bolded fragment that is not
+ * a turn direction — the first bold is usually "right"/"left".
+ */
+export function roadNameFromInstruction(html?: string): string | undefined {
+  if (!html) return undefined;
+  const bolds = [...html.matchAll(/<b>(.*?)<\/b>/g)]
+    .map((m) => m[1]!.replace(/<[^>]+>/g, '').trim())
+    .filter((s) => s.length > 0 && !/^(right|left|north|south|east|west|slight|sharp|straight)$/i.test(s));
+  return bolds[bolds.length - 1];
+}
+
+/**
+ * Escape corridors as straight bearings from the origin — the floor of the
+ * routing chain, used when there is no routing provider AND no canned scenario
+ * that matches this hazard.
+ *
+ * The judge still does real work on these: it samples each corridor against the
+ * real danger field, over real time, and will still reject the one that runs
+ * into the fire. What you lose is road-following, so distances are optimistic
+ * (a straight line is always shorter than the road) and the "fastest" route is
+ * whichever bearing is shortest rather than whatever traffic says.
+ *
+ * Marked `source: 'mock'` so the UI shows NO DATA rather than implying these
+ * are drivable roads.
+ */
+function straightLineCorridors(origin: LatLng, field: DangerField): Route[] {
+  const provenance: Provenance = {
+    source: 'mock',
+    provider: 'straight-line corridors',
+    fetchedAt: new Date().toISOString(),
+    note: 'Direct bearings, not roads. No routing provider was available.',
+  };
+
+  return pickDestinations(origin, field).map((dest, i) => {
+    const distanceKm = haversineKm(origin, dest.location);
+    // Deliberately pessimistic: evacuation traffic, not open highway.
+    const durationMinutes = (distanceKm / EVAC_SPEED_KPH) * 60;
+    // A few intermediate points so the judge samples along the corridor rather
+    // than only at the endpoints.
+    const path: LatLng[] = [];
+    const steps = 12;
+    for (let s = 0; s <= steps; s++) {
+      const t = s / steps;
+      path.push({
+        lat: origin.lat + (dest.location.lat - origin.lat) * t,
+        lng: origin.lng + (dest.location.lng - origin.lng) * t,
+      });
+    }
+
+    return buildRoute({
+      id: `corridor-${i}-${dest.id}`,
+      summary: `Direct corridor ${dest.name}`,
+      legs: [{ path, durationMinutes }],
+      destination: dest,
+      provenance,
+    });
+  });
+}
+
+/** Assumed average speed on a congested evacuation route, km/h. */
+const EVAC_SPEED_KPH = 30;
 
 /**
  * Different destinations often return the same road for the first few km.

@@ -16,6 +16,11 @@ export interface RouteLeg {
   path: LatLng[];
   /** Driving time for this leg under current conditions, minutes. */
   durationMinutes: number;
+  /**
+   * Road this leg runs on, e.g. "Sunset Blvd". Propagated to every segment so a
+   * field report naming a road can be resolved to specific segments.
+   */
+  roadName?: string;
 }
 
 export interface BuildRouteInput {
@@ -59,6 +64,7 @@ export function buildRoute(input: BuildRouteInput): Route {
         distanceKm,
         durationMinutes,
         cumulativeMinutes,
+        roadName: leg.roadName,
       });
 
       if (path.length === 0) path.push(start);

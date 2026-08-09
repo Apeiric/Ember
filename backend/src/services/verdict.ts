@@ -203,6 +203,18 @@ export async function writeVerdict(
   return result.data;
 }
 
+/**
+ * Verdict with no language model at all — computed facts plus templated prose.
+ *
+ * Used by the family view, where four verdicts are produced at once: four Claude
+ * calls would cost ~25 seconds and buy nothing, because every number on a family
+ * card (decision, direction, minutes) is already deterministic. Instant, free,
+ * and byte-for-byte reproducible.
+ */
+export function buildTemplateVerdict(input: VerdictInput): RouteVerdict {
+  return assemble(input, computeFacts(input), null, 'template');
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // PROMPT
 // ═══════════════════════════════════════════════════════════════════════════

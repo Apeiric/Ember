@@ -16,7 +16,12 @@
  * There is no code path here that returns a partial answer.
  */
 
-import type { AssessResponse, ParsedAssessRequest } from '@ember/shared';
+import type {
+  AssessResponse,
+  FieldReport,
+  ParsedAssessRequest,
+  ReportImpact,
+} from '@ember/shared';
 import { createTrace } from '../core/trace';
 import { log } from '../logger';
 import { geocodeAddress } from '../services/geocode';
@@ -26,6 +31,8 @@ import { judgeRoutes } from '../services/judge';
 import { tuningFor } from '../services/profiles';
 import { projectDangerField } from '../services/project';
 import { fetchRoutes } from '../services/routing';
+import { interpretReport } from '../services/interpret';
+import { applyReports, countVerified } from '../services/apply-report';
 import { writeVerdict } from '../services/verdict';
 
 export async function runAssessment(req: ParsedAssessRequest): Promise<AssessResponse> {
@@ -65,10 +72,39 @@ export async function runAssessment(req: ParsedAssessRequest): Promise<AssessRes
     trace,
   );
 
-  // ── 6 & 7. JUDGE + PERSONALIZE ──────────────────────────────────────────
+  // ── 5b. INTERPRET FIELD REPORTS ─────────────────────────────────────────
+  // Claude turns messy human text into structured facts; geometry verifies
+  // them; `applyReports` folds the survivors in as danger zones. The judge
+  // below is byte-for-byte the same code either way.
   const tuning = tuningFor(req.profile);
+  const reportTexts = (req.reports ?? []).filter((t) => t.trim().length > 0);
+  const reports: FieldReport[] = [];
+  let effectiveField = field;
+
+  // Baseline judgement BEFORE any report, so we can show what changed.
+  const baseline =
+    reportTexts.length > 0
+      ? judgeRoutes({ origin, routes: routes.data, field, tuning })
+      : null;
+
+  for (const text of reportTexts) {
+    const report = await interpretReport(
+      { text, routes: routes.data, origin, forceOffline: req.forceOffline },
+      trace,
+    );
+    reports.push(report);
+  }
+  if (reports.length > 0) {
+    effectiveField = applyReports(field, reports, routes.data);
+    const counted = countVerified(reports);
+    log.info(
+      `reports: ${reports.length} parsed → ${counted.blocks} verified block(s), ${counted.dangers} danger area(s)`,
+    );
+  }
+
+  // ── 6 & 7. JUDGE + PERSONALIZE ──────────────────────────────────────────
   const judgement = await trace.step('judge', async () =>
-    judgeRoutes({ origin, routes: routes.data, field, tuning }),
+    judgeRoutes({ origin, routes: routes.data, field: effectiveField, tuning }),
   );
 
   log.info(
@@ -94,6 +130,22 @@ export async function runAssessment(req: ParsedAssessRequest): Promise<AssessRes
     `verdict ${verdict.decision} (${verdict.generatedBy}) in ${Math.round(performance.now() - t0)}ms`,
   );
 
+  const impact: ReportImpact | null =
+    baseline === null
+      ? null
+      : {
+          report: reports[reports.length - 1]!,
+          previousRouteId: baseline.recommended?.route.id ?? null,
+          currentRouteId: judgement.recommended?.route.id ?? null,
+          rerouted:
+            (baseline.recommended?.route.id ?? null) !== (judgement.recommended?.route.id ?? null),
+          newlyRejectedRouteIds: judgement.rejected
+            .map((r) => r.route.id)
+            .filter((id) => !baseline.rejected.some((b) => b.route.id === id)),
+          previousCutoffMinutes: baseline.recommended?.minutesUntilCutoff ?? null,
+          currentCutoffMinutes: judgement.recommended?.minutesUntilCutoff ?? null,
+        };
+
   return {
     ok: true,
     scenarioId: scenarioId ?? null,
@@ -104,7 +156,7 @@ export async function runAssessment(req: ParsedAssessRequest): Promise<AssessRes
       provenance: geo.provenance,
     },
     hazard: hazard.data,
-    field,
+    field: effectiveField,
     profile: req.profile,
     tuning,
     ground: ground.data,
@@ -112,6 +164,8 @@ export async function runAssessment(req: ParsedAssessRequest): Promise<AssessRes
     recommended: judgement.recommended,
     naive: judgement.naive,
     verdict,
+    reports,
+    impact,
     trace: trace.finish(),
   };
 }

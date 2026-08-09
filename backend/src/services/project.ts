@@ -199,11 +199,14 @@ function zoneDanger(zone: DangerZone, point: LatLng, minutes: number): number {
   return intensified * proximity;
 }
 
-/** 1 inside the polygon, decaying linearly to 0 at DANGER_FALLOFF_KM outside. */
+/** 1 inside the polygon, decaying linearly to 0 at the zone's falloff outside. */
 function proximityFactor(zone: DangerZone, point: LatLng): number {
+  // Per-zone reach: a fire front bleeds ~800 m, a closed road essentially none.
+  const falloff = zone.falloffKm ?? DANGER_FALLOFF_KM;
+
   // Cheap bbox reject first — this runs in the innermost scoring loop.
   const b = zoneBBox(zone);
-  const pad = DANGER_FALLOFF_KM / 85; // conservative degrees-per-km at CA latitudes
+  const pad = falloff / 85; // conservative degrees-per-km at CA latitudes
   if (
     point.lng < b[0] - pad ||
     point.lng > b[2] + pad ||
@@ -215,8 +218,8 @@ function proximityFactor(zone: DangerZone, point: LatLng): number {
 
   const d = signedDistanceKm(point, zone.polygon);
   if (d <= 0) return 1;
-  if (d >= DANGER_FALLOFF_KM) return 0;
-  return 1 - d / DANGER_FALLOFF_KM;
+  if (d >= falloff) return 0;
+  return 1 - d / falloff;
 }
 
 // Memoized per-zone geometry. Zones are rebuilt per request, and a route can

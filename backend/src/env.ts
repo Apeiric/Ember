@@ -12,14 +12,46 @@
  */
 
 import { config } from 'dotenv';
+import { existsSync } from 'node:fs';
+import { dirname, resolve as resolvePath } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-// .env.local wins over .env; neither is committed.
-config({ path: '.env.local' });
-config();
+// ─────────────────────────────────────────────────────────────────────────────
+// Locate the env files RELATIVE TO THIS MODULE, not to process.cwd().
+//
+// cwd differs depending on how you start us:
+//   npm run dev              → cwd is backend/
+//   node backend/dist/...    → cwd is the repo root
+// A cwd-relative lookup silently finds nothing in the second case, and you get
+// a "why are all my keys missing" bug five minutes before the demo.
+// ─────────────────────────────────────────────────────────────────────────────
+const here = dirname(fileURLToPath(import.meta.url));
+for (const dir of [
+  resolvePath(here, '..'), // backend/ when running from src/ or dist/
+  resolvePath(here, '../..'), // repo root
+  process.cwd(),
+]) {
+  for (const file of ['.env.local', '.env']) {
+    const path = resolvePath(dir, file);
+    // .env.local wins over .env; first file found for a given key wins overall
+    // (dotenv does not overwrite already-set vars).
+    if (existsSync(path)) config({ path });
+  }
+}
 
-const str = (name: string): string | undefined => {
-  const v = process.env[name];
-  return v && v.trim().length > 0 ? v.trim() : undefined;
+/**
+ * Read the first env var that is actually set.
+ *
+ * Aliases exist because the key names in a shared .env do not always match what
+ * the code was written against. Accepting both is one line here and saves a
+ * silent "provider disabled" that looks identical to a missing key.
+ */
+const str = (...names: string[]): string | undefined => {
+  for (const name of names) {
+    const v = process.env[name];
+    if (v && v.trim().length > 0) return v.trim();
+  }
+  return undefined;
 };
 
 const bool = (name: string, fallback: boolean): boolean => {
@@ -35,10 +67,13 @@ export const env = {
   corsOrigins: (str('CORS_ORIGINS') ?? '').split(',').map((s) => s.trim()).filter(Boolean),
 
   // ── External providers (all optional) ────────────────────────────────────
-  googleMapsKey: str('GOOGLE_MAPS_API_KEY'),
-  firmsKey: str('NASA_FIRMS_API_KEY'),
+  /** Geocoding + Directions. One key, both APIs must be enabled on the project. */
+  googleMapsKey: str('MAPS_API_KEY', 'GOOGLE_MAPS_API_KEY'),
+  firmsKey: str('FIRMS_API_KEY', 'NASA_FIRMS_API_KEY'),
   mireyeKey: str('MIREYE_API_KEY'),
-  mireyeBaseUrl: str('MIREYE_BASE_URL') ?? 'https://api.mireye.ai',
+  // api.mireye.com — verified against https://mireye.ai/docs and the live
+  // OpenAPI at /v1/openapi.json. NOT api.mireye.ai, which does not resolve.
+  mireyeBaseUrl: str('MIREYE_BASE_URL') ?? 'https://api.mireye.com',
   anthropicKey: str('ANTHROPIC_API_KEY'),
   anthropicModel: str('ANTHROPIC_MODEL') ?? 'claude-opus-5',
   groqKey: str('GROQ_API_KEY'),

@@ -12,6 +12,7 @@ import { log } from './logger';
 import { assessRouter } from './routes/assess';
 import { healthRouter } from './routes/health';
 import { scenariosRouter } from './routes/scenarios';
+import { familyRouter } from './routes/family';
 
 export function createApp() {
   const app = express();
@@ -26,6 +27,7 @@ export function createApp() {
   app.use('/api', healthRouter);
   app.use('/api', scenariosRouter);
   app.use('/api', assessRouter);
+  app.use('/api', familyRouter);
 
   app.get('/', (_req, res) => {
     res.json({
