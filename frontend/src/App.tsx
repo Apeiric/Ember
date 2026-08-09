@@ -28,6 +28,7 @@ import { useAssessment } from './hooks/useAssessment';
 import { useHousehold } from './hooks/useHousehold';
 import { fetchScenarios } from './lib/api';
 import { AddressInput } from './components/AddressInput';
+import { AssessingCard } from './components/AssessingCard';
 import { FamilyBoard } from './components/FamilyView';
 import { FieldReportInput } from './components/FieldReportInput';
 import { HazardSummary } from './components/HazardSummary';
@@ -255,7 +256,7 @@ function EscapeTab({
                 onClick={() => setThreeD(true)}
                 className="absolute right-3 top-3 z-10 rounded-lg border border-ash-600/80 bg-ash-900/85 px-3 py-1.5 text-xs font-semibold text-ash-200 backdrop-blur transition-colors hover:border-ember-500 hover:text-ember-300"
               >
-                See it in 3D
+                Understand it in 3D
               </button>
             )}
           </>
@@ -297,7 +298,11 @@ function EscapeTab({
             </div>
           )}
 
-          {!data && !error && <Onboard onDemo={onSubmit} scenarios={scenarios} goPeople={goPeople} />}
+          {!data && !error && (loading ? (
+            <AssessingCard />
+          ) : (
+            <Onboard onDemo={onSubmit} scenarios={scenarios} goPeople={goPeople} />
+          ))}
 
           {/* Who this verdict is FOR — switching people is emergency-flow;
               editing them is not, so it lives on the PEOPLE tab. */}

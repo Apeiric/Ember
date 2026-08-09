@@ -70,7 +70,7 @@ export function RoutePlan({ recommended, tuning, essentials, whyNot }: Props) {
         {steps.map((s, i) => {
           const hasPinch = i === pinchStep;
           return (
-            <li key={i}>
+            <li key={i} className="rise" style={{ animationDelay: `${i * 70}ms` }}>
               <PlanRow
                 marker={String(i + 1)}
                 markerClass="bg-ash-700 text-ash-100"
