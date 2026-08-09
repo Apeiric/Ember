@@ -28,7 +28,10 @@ import 'cesium/Build/Cesium/Widgets/widgets.css';
 import type { AssessResponse, LatLng, Polygon } from '@ember/shared';
 import { ROUTE_COLORS } from '../lib/format';
 
-const GOOGLE_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined;
+// Accept either name — deployments have used both. Same tolerance the 2D map
+// applies to the two Mapbox token names.
+const GOOGLE_KEY = (import.meta.env.VITE_GOOGLE_MAPS_API_KEY ??
+  import.meta.env.VITE_MAPS_API_KEY) as string | undefined;
 const CESIUM_TOKEN = import.meta.env.VITE_CESIUM_TOKEN as string | undefined;
 
 const css = (hex: string, alpha = 1) => Cesium.Color.fromCssColorString(hex).withAlpha(alpha);
@@ -115,7 +118,7 @@ export function Scene3D({ data, onExit }: { data: AssessResponse | null; onExit:
           }
         } else {
           v.scene.globe.show = true;
-          setDetail('No VITE_GOOGLE_MAPS_API_KEY — terrain only, no photorealistic buildings');
+          setDetail('No VITE_GOOGLE_MAPS_API_KEY / VITE_MAPS_API_KEY — terrain only, no photorealistic buildings');
         }
 
         if (disposed) {
