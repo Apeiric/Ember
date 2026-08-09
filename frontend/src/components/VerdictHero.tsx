@@ -89,7 +89,7 @@ export function VerdictHero({ verdict, recommended, compact = false }: Props) {
                 </span>
               </div>
               {recommended && (
-                <p className="mt-1.5 line-clamp-2 text-[0.72rem] leading-snug text-white/70">
+                <p className="mt-1.5 line-clamp-2 text-[0.72rem] leading-snug text-white/85">
                   {plainRoute(recommended)}
                 </p>
               )}
@@ -112,13 +112,13 @@ export function VerdictHero({ verdict, recommended, compact = false }: Props) {
               <span className="text-5xl font-black leading-none tabular-nums text-white">
                 {minutes}
               </span>
-              <span className="text-base font-bold text-white/70">
+              <span className="text-base font-bold text-white/85">
                 {minutes === 1 ? 'minute' : 'minutes'}
               </span>
             </div>
           )}
           {verdict.minutesUntilCutoff !== null && verdict.minutesUntilCutoff > 0 && (
-            <p className="mt-1.5 text-[0.72rem] leading-snug text-white/70">
+            <p className="mt-1.5 text-[0.72rem] leading-snug text-white/85">
               The road closes in about {verdict.minutesUntilCutoff} minutes
             </p>
           )}

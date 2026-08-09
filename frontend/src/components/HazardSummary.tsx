@@ -60,7 +60,7 @@ export function HazardSummary({ data }: { data: AssessResponse }) {
         )
       )}
 
-      <p className="border-t border-ash-700/60 pt-2.5 text-[0.64rem] leading-snug text-ash-500">
+      <p className="border-t border-ash-700/60 pt-2.5 text-[0.64rem] leading-snug text-ash-400">
         {field.disclaimer}
       </p>
     </section>

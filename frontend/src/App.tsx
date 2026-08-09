@@ -17,6 +17,7 @@
  */
 
 import { Suspense, lazy, useEffect, useState } from 'react';
+import type { MemberEdit } from './hooks/useHousehold';
 import type { ScenarioSummary } from '@ember/shared';
 import { useAssessment } from './hooks/useAssessment';
 import { useHousehold } from './hooks/useHousehold';
@@ -74,6 +75,31 @@ export default function App() {
     if (nextAddress) void run({ address: nextAddress, profile: member.profile, scenarioId });
   }
 
+  /**
+   * Saving an edit must be VISIBLE. If the person on screen is the one who was
+   * edited, re-run their assessment with the new address and profile — the
+   * verdict updating is the proof the save took.
+   */
+  function handleMemberUpdate(id: string, edit: MemberEdit) {
+    const merged = household.update(id, edit);
+    if (!merged || id !== household.activeId) return;
+    const nextAddress = merged.address.trim();
+    if (!nextAddress) return;
+    setAddress(nextAddress);
+    void run({ address: nextAddress, profile: merged.profile, scenarioId });
+  }
+
+  // A member's pin should stand where their ADDRESS geocodes, not where the
+  // fixture guessed. Live runs only: a pinned scenario resolves unknown
+  // addresses to its canned demo origin, and "we could not place you, so we
+  // moved your pin to the demo house" is exactly the wrong thing to display.
+  useEffect(() => {
+    if (data && household.activeId && !data.scenarioId) {
+      household.setLocation(household.activeId, data.origin.location);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data]);
+
   if (view === 'family') {
     return <FamilyView onExit={() => setView('map')} />;
   }
@@ -88,7 +114,12 @@ export default function App() {
           </Suspense>
         ) : (
           <>
-            <MapView data={data} />
+            <MapView
+              data={data}
+              members={household.members}
+              activeId={household.activeId}
+              onSelectMember={handleSelectMember}
+            />
             {data && (
               <button
                 type="button"
@@ -118,11 +149,11 @@ export default function App() {
           {/* The one thing we refused to send you down. Kept adjacent to the
               verdict because it is the reason to trust it. */}
           {data?.naive?.rating === 'REJECTED' && data.verdict.rejectedSummary && (
-            <div className="rounded-2xl border border-alarm-500/30 bg-alarm-500/[0.07] px-4 py-3">
-              <p className="text-[0.62rem] font-bold uppercase tracking-[0.14em] text-alarm-400">
+            <div className="rounded-2xl border border-alarm-500/50 bg-alarm-500/15 px-4 py-3">
+              <p className="text-[0.62rem] font-bold uppercase tracking-[0.14em] text-alarm-300">
                 We did not send you this way
               </p>
-              <p className="mt-1 text-[0.82rem] leading-snug text-ash-200">
+              <p className="mt-1 text-[0.82rem] leading-snug text-ash-100">
                 {data.verdict.rejectedSummary}
               </p>
             </div>
@@ -143,10 +174,9 @@ export default function App() {
             members={household.members}
             activeId={household.activeId}
             onSelect={handleSelectMember}
-            onUpdate={household.update}
+            onUpdate={handleMemberUpdate}
             onAdd={household.add}
             onRemove={household.remove}
-            disabled={loading}
           />
 
           {data && (
@@ -170,7 +200,7 @@ export default function App() {
             <details className="panel group overflow-hidden">
               <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 transition-colors hover:bg-ash-800/50">
                 <span className="label">Show the working</span>
-                <span className="flex items-center gap-2 text-[0.66rem] text-ash-500">
+                <span className="flex items-center gap-2 text-[0.66rem] text-ash-300">
                   {data.routes.filter((r) => r.rating === 'REJECTED').length} route
                   {data.routes.filter((r) => r.rating === 'REJECTED').length === 1 ? '' : 's'} rejected
                   <span className="text-ash-600 transition-transform group-open:rotate-90">›</span>
@@ -185,7 +215,7 @@ export default function App() {
           )}
 
           {data && (
-            <p className="rounded-xl bg-ash-950/80 px-3 py-2 text-[0.62rem] leading-snug text-ash-500 backdrop-blur-sm">
+            <p className="rounded-xl bg-ash-950/90 px-3 py-2 text-[0.62rem] leading-snug text-ash-300 backdrop-blur-sm">
               Ember is a decision aid, not an official evacuation order. Always follow instructions
               from emergency services.
             </p>
@@ -247,7 +277,7 @@ function Intro() {
         <br />
         Ember tells you the way <em className="not-italic font-semibold text-ember-400">out</em>.
       </p>
-      <p className="mt-2 text-[0.75rem] leading-relaxed text-ash-500">
+      <p className="mt-2 text-[0.75rem] leading-relaxed text-ash-300">
         We check where the fire will be when you get there — not where it is now — and how fast you
         can actually move.
       </p>

@@ -52,19 +52,39 @@ export function useHousehold() {
 
   const active = members.find((m) => m.id === activeId) ?? null;
 
-  const update = useCallback((id: string, edit: MemberEdit) => {
+  /**
+   * Apply an edit and RETURN the merged member, so the caller can immediately
+   * re-run an assessment with the new values instead of reading stale state.
+   */
+  const update = useCallback(
+    (id: string, edit: MemberEdit): FamilyMember | null => {
+      // Merge from the CURRENT list, not inside the setState updater — updaters
+      // run during render, which would return null to the caller every time.
+      const existing = members.find((m) => m.id === id);
+      if (!existing) return null;
+      const merged: FamilyMember = {
+        ...existing,
+        name: edit.name.trim() || existing.name,
+        relationship: edit.relationship.trim() || existing.relationship,
+        address: edit.address.trim() || existing.address,
+        situation: edit.situation.trim() || undefined,
+        profile: { ...existing.profile, mobility: edit.mobility, hasCar: edit.hasCar },
+      };
+      setMembers((prev) => prev.map((m) => (m.id === id ? merged : m)));
+      return merged;
+    },
+    [members],
+  );
+
+  /** Move a member's map pin — called when an assessment geocodes their address. */
+  const setLocation = useCallback((id: string, location: { lat: number; lng: number }) => {
     setMembers((prev) =>
       prev.map((m) =>
-        m.id !== id
-          ? m
-          : {
-              ...m,
-              name: edit.name.trim() || m.name,
-              relationship: edit.relationship.trim() || m.relationship,
-              address: edit.address.trim() || m.address,
-              situation: edit.situation.trim() || undefined,
-              profile: { ...m.profile, mobility: edit.mobility, hasCar: edit.hasCar },
-            },
+        m.id === id &&
+        (Math.abs(m.location.lat - location.lat) > 1e-6 ||
+          Math.abs(m.location.lng - location.lng) > 1e-6)
+          ? { ...m, location }
+          : m,
       ),
     );
   }, []);
@@ -100,5 +120,5 @@ export function useHousehold() {
     [],
   );
 
-  return { members, active, activeId, setActiveId, update, add, remove, loaded };
+  return { members, active, activeId, setActiveId, update, setLocation, add, remove, loaded };
 }

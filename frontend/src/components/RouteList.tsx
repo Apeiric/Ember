@@ -23,7 +23,7 @@ export function RouteList({
     <section className="panel p-4">
       <div className="mb-3 flex items-baseline justify-between">
         <h2 className="label">Routes considered</h2>
-        <span className="text-[0.68rem] text-ash-500">
+        <span className="text-[0.68rem] text-ash-400">
           {routes.filter((r) => r.rating === 'REJECTED').length} of {routes.length} rejected
         </span>
       </div>

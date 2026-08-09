@@ -28,11 +28,11 @@
 
 @layer components {
   .panel {
-    @apply rounded-2xl border border-ash-700/70 bg-ash-900/85 backdrop-blur-xl;
+    @apply rounded-2xl border border-ash-600/80 bg-ash-900/95 shadow-[0_4px_24px_rgba(0,0,0,0.45)] backdrop-blur-xl;
   }
 
   .label {
-    @apply text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ash-400;
+    @apply text-[0.68rem] font-bold uppercase tracking-[0.18em] text-ash-300;
   }
 
   /* Thin scrollbars — the side rail scrolls a lot during a demo. */

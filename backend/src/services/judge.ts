@@ -117,6 +117,7 @@ export function scoreRoute(
   let peakDanger = 0;
   let firstContact: DangerContact | null = null;
   let minutesUntilCutoff: number | null = null;
+  let pinch: ScoredRoute['pinch'] = null;
   let previousArrival = tuning.prepMinutes;
 
   for (const sample of samples) {
@@ -154,6 +155,12 @@ export function scoreRoute(
       const slack = dangerArrival - yourArrival;
       if (minutesUntilCutoff === null || slack < minutesUntilCutoff) {
         minutesUntilCutoff = slack;
+        // Remember WHERE, not just how much — the map marks this point.
+        pinch = {
+          location: sample.point,
+          slackMinutes: round(slack, 1),
+          minutesIntoTrip: round(yourArrival, 1),
+        };
       }
     }
   }
@@ -191,6 +198,7 @@ export function scoreRoute(
     direction: compassFromBearing(brg),
     isNaiveFastest,
     climbM: Math.round(climbM),
+    pinch,
   };
 }
 

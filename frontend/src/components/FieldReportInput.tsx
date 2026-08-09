@@ -49,7 +49,7 @@ export function FieldReportInput({ onSubmit, loading, reports, impact }: Props) 
     <section className="panel p-4">
       <div className="flex items-baseline justify-between gap-2">
         <h2 className="label">Something changed?</h2>
-        <span className="text-[0.62rem] text-ash-500">read by Claude · checked against the map</span>
+        <span className="text-[0.62rem] text-ash-400">read by Claude · checked against the map</span>
       </div>
       <p className="mt-1.5 text-[0.72rem] leading-snug text-ash-400">
         Paste a text, a 911 update, anything you have heard. Write it however you like.
@@ -155,7 +155,7 @@ function ReportLog({ reports }: { reports: FieldReport[] }) {
             ))}
           </div>
 
-          <p className="mt-2 text-[0.6rem] uppercase tracking-wider text-ash-600">
+          <p className="mt-2 text-[0.6rem] uppercase tracking-wider text-ash-400">
             read by {report.interpretedBy} · every fact checked against the map
           </p>
         </li>
@@ -178,7 +178,7 @@ function Fact({ used, label, detail }: { used: boolean; label: string; detail: s
       </span>
       <span className="min-w-0 text-[0.7rem] leading-snug text-ash-300">
         <span className={used ? 'text-ash-100' : 'text-ash-400'}>{label}</span>
-        <span className="text-ash-500"> — {detail}</span>
+        <span className="text-ash-400"> — {detail}</span>
       </span>
     </div>
   );

@@ -75,7 +75,7 @@ export function AddressInput({ onSubmit, loading, initialValue = '', scenarios }
 
       {scenarios.length > 0 && (
         <div className="flex flex-wrap gap-1.5 pt-0.5">
-          <span className="self-center text-[0.65rem] uppercase tracking-wider text-ash-500">
+          <span className="self-center text-[0.65rem] uppercase tracking-wider text-ash-400">
             Demo:
           </span>
           {scenarios.map((s) => (
@@ -87,7 +87,7 @@ export function AddressInput({ onSubmit, loading, initialValue = '', scenarios }
                 setValue(s.demoAddress);
                 onSubmit(s.demoAddress, s.id);
               }}
-              className="rounded-lg border border-ash-700 bg-ash-850 px-2.5 py-1 text-[0.7rem] text-ash-300 transition-colors hover:border-ember-500/50 hover:text-ember-300 disabled:opacity-40"
+              className="rounded-lg border border-ash-700 bg-ash-850 px-2.5 py-1 text-[0.7rem] text-ash-200 transition-colors hover:border-ember-500/50 hover:text-ember-300 disabled:opacity-40"
             >
               {s.name}
             </button>

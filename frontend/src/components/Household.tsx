@@ -12,7 +12,7 @@
  * setup is meant to have happened weeks ago.
  */
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { FamilyMember } from '@ember/shared';
 import type { MemberEdit } from '../hooks/useHousehold';
 
@@ -23,27 +23,22 @@ interface Props {
   onUpdate: (id: string, edit: MemberEdit) => void;
   onAdd: () => string;
   onRemove: (id: string) => void;
-  disabled?: boolean;
 }
 
-export function Household({
-  members,
-  activeId,
-  onSelect,
-  onUpdate,
-  onAdd,
-  onRemove,
-  disabled,
-}: Props) {
+export function Household({ members, activeId, onSelect, onUpdate, onAdd, onRemove }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
+  // Brief "SAVED" flash so an edit is visibly acknowledged, not just silently kept.
+  const [savedId, setSavedId] = useState<string | null>(null);
+  const savedTimer = useRef<number | undefined>(undefined);
+  useEffect(() => () => window.clearTimeout(savedTimer.current), []);
 
   return (
     <section className="panel p-4">
       <div className="flex items-baseline justify-between gap-2">
         <h2 className="label">Your household</h2>
-        <span className="text-[0.62rem] text-ash-500">set up before the fire</span>
+        <span className="text-[0.62rem] text-ash-400">set up before the fire</span>
       </div>
-      <p className="mt-1.5 text-[0.72rem] leading-snug text-ash-400">
+      <p className="mt-1.5 text-[0.72rem] leading-snug text-ash-300">
         Tap whoever you are. We use their address and how fast they can move.
       </p>
 
@@ -57,6 +52,9 @@ export function Household({
                 onSave={(edit) => {
                   onUpdate(member.id, edit);
                   setEditingId(null);
+                  setSavedId(member.id);
+                  window.clearTimeout(savedTimer.current);
+                  savedTimer.current = window.setTimeout(() => setSavedId(null), 1800);
                 }}
                 onRemove={
                   members.length > 1
@@ -73,7 +71,7 @@ export function Household({
               <MemberRow
                 member={member}
                 active={member.id === activeId}
-                disabled={disabled}
+                justSaved={member.id === savedId}
                 onSelect={() => onSelect(member.id)}
                 onEdit={() => setEditingId(member.id)}
               />
@@ -84,9 +82,8 @@ export function Household({
 
       <button
         type="button"
-        disabled={disabled}
         onClick={() => setEditingId(onAdd())}
-        className="mt-2 w-full rounded-xl border border-dashed border-ash-600 px-3 py-2 text-[0.72rem] font-semibold text-ash-400 transition-colors hover:border-ember-500/60 hover:text-ember-300 disabled:opacity-40"
+        className="mt-2 w-full rounded-xl border border-dashed border-ash-500 px-3 py-2 text-[0.72rem] font-semibold text-ash-300 transition-colors hover:border-ember-500/60 hover:text-ember-300"
       >
         + Add someone
       </button>
@@ -97,13 +94,13 @@ export function Household({
 function MemberRow({
   member,
   active,
-  disabled,
+  justSaved,
   onSelect,
   onEdit,
 }: {
   member: FamilyMember;
   active: boolean;
-  disabled?: boolean;
+  justSaved: boolean;
   onSelect: () => void;
   onEdit: () => void;
 }) {
@@ -118,9 +115,8 @@ function MemberRow({
       <button
         type="button"
         onClick={onSelect}
-        disabled={disabled}
         aria-pressed={active}
-        className="min-w-0 flex-1 px-3 py-2.5 text-left disabled:opacity-50"
+        className="min-w-0 flex-1 px-3 py-2.5 text-left"
       >
         <div className="flex items-center gap-2">
           <span
@@ -131,9 +127,14 @@ function MemberRow({
           >
             {member.name}
           </span>
-          <span className="shrink-0 text-[0.62rem] text-ash-500">{member.relationship}</span>
+          <span className="shrink-0 text-[0.62rem] text-ash-400">{member.relationship}</span>
+          {justSaved && (
+            <span className="shrink-0 rounded border border-safe-500/50 bg-safe-500/15 px-1.5 py-0.5 text-[0.55rem] font-bold uppercase tracking-wider text-safe-400">
+              Saved ✓
+            </span>
+          )}
         </div>
-        <div className="mt-0.5 truncate pl-4 text-[0.68rem] text-ash-400">
+        <div className="mt-0.5 truncate pl-4 text-[0.68rem] text-ash-300">
           {member.address || 'No address yet'}
         </div>
         <div className="mt-1 flex flex-wrap gap-1 pl-4">
@@ -144,7 +145,7 @@ function MemberRow({
           {!member.profile.hasCar && <Tag tone="alarm" label="No car" />}
         </div>
         {member.situation && (
-          <p className="mt-1 line-clamp-2 pl-4 text-[0.65rem] leading-snug text-ash-500">
+          <p className="mt-1 line-clamp-2 pl-4 text-[0.65rem] leading-snug text-ash-400">
             {member.situation}
           </p>
         )}
@@ -153,9 +154,8 @@ function MemberRow({
       <button
         type="button"
         onClick={onEdit}
-        disabled={disabled}
         aria-label={`Edit ${member.name}`}
-        className="shrink-0 border-l border-ash-700 px-3 text-[0.65rem] font-semibold uppercase tracking-wider text-ash-500 transition-colors hover:bg-ash-800 hover:text-ember-300 disabled:opacity-40"
+        className="shrink-0 border-l border-ash-600 px-3 text-[0.65rem] font-bold uppercase tracking-wider text-ash-300 transition-colors hover:bg-ash-800 hover:text-ember-300"
       >
         Edit
       </button>
@@ -222,7 +222,7 @@ function MemberForm({
               }`}
             >
               <div className="text-[0.75rem] font-semibold text-ash-100">{label}</div>
-              <div className="text-[0.6rem] leading-tight text-ash-500">{hint}</div>
+              <div className="text-[0.6rem] leading-tight text-ash-400">{hint}</div>
             </button>
           ))}
         </div>

@@ -313,6 +313,20 @@ export interface ScoredRoute {
   isNaiveFastest: boolean;
   /** Total climb, metres. Used to prefer flatter routes for vulnerable profiles. */
   climbM: number;
+  /**
+   * WHERE the race is decided: the exact point on this route with the least
+   * slack between your arrival and the danger's. On a rejected route this is
+   * the spot the fire beats you to — the map marks it, because a rejection you
+   * can point at is believable and an invisible one is not.
+   * `null` when the route never meets projected danger.
+   */
+  pinch: {
+    location: LatLng;
+    /** Slack at that point, minutes. Negative = the hazard gets there first. */
+    slackMinutes: number;
+    /** How far into YOUR trip that point is, minutes (prep included). */
+    minutesIntoTrip: number;
+  } | null;
 }
 
 export interface JudgeResult {

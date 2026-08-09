@@ -125,6 +125,21 @@ export const PALISADES_GEOCODES: Record<string, { formattedAddress: string; loca
     formattedAddress: 'Pacific Palisades, Los Angeles, CA, USA',
     location: { lat: 34.0464, lng: -118.5265 },
   },
+  // The household fixtures' addresses. Without these, selecting a family member
+  // under the pinned scenario silently geocode-falls-back to the demo origin —
+  // their verdict gets computed from a house they are not in.
+  '881 alma real dr, pacific palisades': {
+    formattedAddress: '881 Alma Real Dr, Pacific Palisades, CA 90272, USA',
+    location: { lat: 34.0466, lng: -118.5223 },
+  },
+  'palisades charter high school': {
+    formattedAddress: 'Palisades Charter High School, 15777 Bowdoin St, Pacific Palisades, CA',
+    location: { lat: 34.0407, lng: -118.5265 },
+  },
+  'brentwood, los angeles': {
+    formattedAddress: 'Brentwood, Los Angeles, CA, USA',
+    location: { lat: 34.0522, lng: -118.4712 },
+  },
 };
 
 export const PALISADES_GROUND: GroundContext = {

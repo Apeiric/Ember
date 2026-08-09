@@ -160,7 +160,11 @@ export async function interpretReport(
   const unresolved: string[] = [];
 
   const blocks: RoadBlock[] = data.blocked_roads.map((raw) => {
-    const match = matchRoadToRoutes(raw.road, input.routes);
+    let match = matchRoadToRoutes(raw.road, input.routes);
+    // "Sunset near the east side" closes the east end of Sunset, not the whole
+    // road — the reporter told us which part, so use it.
+    const hint = compassHintFor(raw.road, input.text);
+    if (hint && match.verified) match = filterSegmentsBySide(match, hint, input.routes);
     if (!match.verified) unresolved.push(`Road "${raw.road}" — no candidate route matches it`);
     return {
       road: raw.road,
@@ -284,6 +288,93 @@ export function directionOf(road: string): string | null {
     if (DIRECTION_WORDS.has(t)) return t;
   }
   return null;
+}
+
+/**
+ * The compass qualifier attached to a road MENTION in the raw report — "a power
+ * line is down across Sunset near the east side" — as opposed to a direction in
+ * the road's NAME ("PCH south"), which `directionOf` handles.
+ *
+ * We only read the clause(s) that actually contain the road's name tokens, so a
+ * compass word from an unrelated sentence ("fire on the north ridge, and Sunset
+ * is blocked") cannot leak onto the wrong fact. Ambiguity (two directions, or
+ * none) returns null, and null means "no filtering" — the whole road stays
+ * blocked, which is the safe direction to fail.
+ */
+export function compassHintFor(road: string, reportText: string): 'north' | 'south' | 'east' | 'west' | null {
+  // A direction in the NAME is a carriageway, not a geographic side. Do not
+  // geometry-filter "PCH south" — matchesAny already handles it.
+  if (directionOf(road)) return null;
+  const tokens = significantTokens(road);
+  if (tokens.length === 0) return null;
+
+  const clauses = reportText.toLowerCase().split(/[,.;\n!?–—]+/);
+  const relevant = clauses.filter((c) => tokens.some((t) => c.includes(t)));
+  if (relevant.length === 0) return null;
+
+  const found = new Set<'north' | 'south' | 'east' | 'west'>();
+  for (const clause of relevant) {
+    for (const m of clause.matchAll(/\b(north|south|east|west)(?:ern|erly)?\b/g)) {
+      found.add(m[1] as 'north' | 'south' | 'east' | 'west');
+    }
+  }
+  return found.size === 1 ? [...found][0]! : null;
+}
+
+/**
+ * Keep only the matched segments on the stated side of the road's own extent.
+ *
+ * "Sunset near the east side" must not close the western stretch of Sunset that
+ * the recommended escape uses — over-matching there strands the user for no
+ * stated reason. Side is judged against the centroid of everything that
+ * matched (the road as we know it), with a margin so segments straddling the
+ * middle are dropped rather than guessed. If filtering would remove every
+ * segment, the hint contradicts the geometry and we keep the full match:
+ * fail closed, never open.
+ */
+export function filterSegmentsBySide(
+  match: {
+    verified: boolean;
+    routeIds: string[];
+    affectedSegments: { routeId: string; segmentIndex: number }[];
+    location: LatLng | null;
+  },
+  hint: 'north' | 'south' | 'east' | 'west',
+  routes: Route[],
+): typeof match {
+  if (match.affectedSegments.length < 2) return match;
+
+  const mids = match.affectedSegments.map(({ routeId, segmentIndex }) => {
+    const seg = routes.find((r) => r.id === routeId)?.segments[segmentIndex];
+    return seg
+      ? { lat: (seg.start.lat + seg.end.lat) / 2, lng: (seg.start.lng + seg.end.lng) / 2 }
+      : null;
+  });
+  const placed = mids.filter((m): m is LatLng => m !== null);
+  if (placed.length < 2) return match;
+
+  const centroid = {
+    lat: placed.reduce((s, m) => s + m.lat, 0) / placed.length,
+    lng: placed.reduce((s, m) => s + m.lng, 0) / placed.length,
+  };
+  // ~0.15 km in degrees at CA latitudes; a segment must be clearly on the side.
+  const MARGIN = 0.0016;
+  const onSide = (m: LatLng): boolean =>
+    hint === 'east'
+      ? m.lng > centroid.lng + MARGIN
+      : hint === 'west'
+        ? m.lng < centroid.lng - MARGIN
+        : hint === 'north'
+          ? m.lat > centroid.lat + MARGIN
+          : m.lat < centroid.lat - MARGIN;
+
+  const kept = match.affectedSegments.filter((_, i) => mids[i] && onSide(mids[i]!));
+  if (kept.length === 0) return match; // hint contradicts geometry → keep all
+
+  const routeIds = [...new Set(kept.map((s) => s.routeId))];
+  const first = kept[0]!;
+  const seg = routes.find((r) => r.id === first.routeId)?.segments[first.segmentIndex];
+  return { verified: true, routeIds, affectedSegments: kept, location: seg?.start ?? match.location };
 }
 
 /**
