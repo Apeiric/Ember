@@ -32,6 +32,9 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    sourcemap: true,
+    // Sourcemaps off in production: the Scene3D map alone is 17 MB, and
+    // Render's free instance (512 MB) has been known to OOM generating them.
+    // A deploy that builds beats a deploy you can debug.
+    sourcemap: false,
   },
 });
