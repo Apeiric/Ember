@@ -297,7 +297,7 @@ export function Scene3D({ data, onExit }: { data: AssessResponse | null; onExit:
       <button
         type="button"
         onClick={onExit}
-        className="absolute right-3 top-3 z-10 rounded-lg border border-ash-600 bg-ash-900/85 px-3 py-1.5 text-xs font-semibold text-ash-200 backdrop-blur transition-colors hover:border-ember-500 hover:text-ember-300"
+        className="absolute right-3 top-3 z-10 rounded-lg border border-white/10 bg-ash-900/85 px-3 py-1.5 text-xs font-semibold text-ash-200 backdrop-blur transition-colors hover:border-ember-500 hover:text-ember-300"
       >
         ← 2D map
       </button>
@@ -320,7 +320,7 @@ export function Scene3D({ data, onExit }: { data: AssessResponse | null; onExit:
             <button
               type="button"
               onClick={onExit}
-              className="mt-4 rounded-lg border border-ash-600 px-3 py-1.5 text-xs text-ash-200 hover:border-ember-500"
+              className="mt-4 rounded-lg border border-white/10 px-3 py-1.5 text-xs text-ash-200 hover:border-ember-500"
             >
               Back to the 2D map
             </button>

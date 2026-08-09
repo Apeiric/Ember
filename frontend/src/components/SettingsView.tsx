@@ -33,7 +33,7 @@ export function SettingsView({ scenarios, offline, onOffline, onRunScenario }: P
               key={s.id}
               type="button"
               onClick={() => onRunScenario(s)}
-              className="w-full rounded-xl border border-ash-600 bg-ash-900 px-3.5 py-2.5 text-left transition-colors hover:border-ash-400"
+              className="w-full rounded-xl border border-white/10 bg-ash-900 px-3.5 py-2.5 text-left transition-colors hover:border-ash-400"
             >
               <div className="flex items-baseline justify-between gap-2">
                 <span className="text-[0.85rem] font-bold text-ash-50">{s.name}</span>
@@ -50,7 +50,7 @@ export function SettingsView({ scenarios, offline, onOffline, onRunScenario }: P
       {/* ── Offline mode ── */}
       <section className="panel p-4">
         <h2 className="label">Guaranteed-offline mode</h2>
-        <label className="mt-2 flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-ash-600 bg-ash-900 px-3.5 py-3">
+        <label className="mt-2 flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-white/10 bg-ash-900 px-3.5 py-3">
           <span className="text-[0.8rem] leading-snug text-ash-100">
             Force every stage onto canned data
             <span className="block text-[0.66rem] text-ash-400">
@@ -86,7 +86,7 @@ export function SettingsView({ scenarios, offline, onOffline, onRunScenario }: P
             </li>
           ))}
         </ul>
-        <p className="mt-2.5 border-t border-ash-700/60 pt-2 text-[0.68rem] leading-snug text-ash-300">
+        <p className="mt-2.5 border-t border-white/[0.07] pt-2 text-[0.68rem] leading-snug text-ash-300">
           Every value carries provenance (live / cached / canned) and the Escape tab's "show the
           working" panel displays it. When a feed is down we degrade loudly, never silently.
         </p>
@@ -101,7 +101,7 @@ export function SettingsView({ scenarios, offline, onOffline, onRunScenario }: P
           <li>• When the incident closes, live traces auto-delete.</li>
           <li>• Precise location is never sold. Aggregate road-survivability data only.</li>
         </ul>
-        <p className="mt-2.5 border-t border-ash-700/60 pt-2 text-[0.68rem] leading-snug text-ash-300">
+        <p className="mt-2.5 border-t border-white/[0.07] pt-2 text-[0.68rem] leading-snug text-ash-300">
           In a fire, your location is medical data. We treat it that way.
         </p>
       </section>

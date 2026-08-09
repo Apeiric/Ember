@@ -25,7 +25,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { FamilyAssessment, LatLng } from '@ember/shared';
 import { fetchFamily } from '../lib/api';
 
-const TICK_MS = 1200;
+const TICK_MS = 600; // smoother pin motion; world-speed unchanged
 const TIME_SCALE = 6; // demo seconds → world seconds
 const DRIVE_KPH = 34; // evacuation-realistic urban speed
 const REASSIGN_HYSTERESIS_MIN = 1.5; // don't flap on a near-tie
@@ -42,6 +42,8 @@ export interface LiveRow {
   name: string;
   phase: 'moving' | 'sheltering' | 'waiting' | 'pickup' | 'arrived';
   text: string;
+  /** 0..1 of this person's current leg — evacuation or pickup drive. */
+  progress?: number;
 }
 
 export interface LiveEvent {
@@ -70,6 +72,8 @@ interface Track {
   pos: LatLng;
   distAlongKm: number;
   totalKm: number;
+  /** Distance to the pickup target when assigned — denominates the progress bar. */
+  pickupStartKm?: number;
 }
 
 export function useLiveFamily(onPositions: (positions: Record<string, LatLng>) => void) {
@@ -95,6 +99,9 @@ export function useLiveFamily(onPositions: (positions: Record<string, LatLng>) =
 
   const start = useCallback(async () => {
     if (running) return;
+    // Belt and braces: never two clocks. A stale closure or double-tap must
+    // not leave a second interval advancing everyone at 2x.
+    window.clearInterval(timer.current);
     const family: FamilyAssessment = await fetchFamily();
 
     tracks.current = family.members.map((m) => {
@@ -124,22 +131,9 @@ export function useLiveFamily(onPositions: (positions: Record<string, LatLng>) =
       const dtKm = (DRIVE_KPH / 3600) * (TICK_MS / 1000) * TIME_SCALE;
 
       const target = tracks.current.find((t) => t.needsPickup);
-      const assignee = currentAssignee.current;
 
-      // ── advance the movers ────────────────────────────────────────────
-      for (const t of tracks.current) {
-        if (t.needsPickup || t.sheltering) continue;
-        if (t.id === assignee && target) {
-          // The assigned adult drives TOWARD the target, not to safety.
-          t.pos = stepToward(t.pos, target.pos, dtKm);
-        } else if (t.path.length >= 2 && t.distAlongKm < t.totalKm) {
-          // Everyone else follows their own assessed escape route.
-          t.distAlongKm = Math.min(t.totalKm, t.distAlongKm + dtKm);
-          t.pos = pointAlong(t.path, t.distAlongKm);
-        }
-      }
-
-      // ── the decision: who picks up the kids RIGHT NOW? ────────────────
+      // ── the decision FIRST, movement second: the initial assignment must
+      //    exist at T+0, before anyone has moved a metre ─────────────────
       // Recomputed from live positions every tick. This is the aunt-is-
       // closer-than-you feature, and it is arithmetic, not a script.
       let nextAssignment: Assignment | null = null;
@@ -170,16 +164,17 @@ export function useLiveFamily(onPositions: (positions: Record<string, LatLng>) =
               incumbent && incumbent.t.id !== chosen.t.id
                 ? ` — ${Math.max(1, Math.round(incumbent.etaMin - chosen.etaMin))} min closer than ${previous?.name ?? 'the previous plan'}`
                 : '';
-            setEvents((prev) => [
-              {
-                atSec: elapsedSec,
-                kind: currentAssignee.current ? 'reassign' : 'assign',
-                text: currentAssignee.current
-                  ? `Pickup reassigned: ${chosen.t.name} → ${target.name}${gain}`
-                  : `${chosen.t.name} is picking up ${target.name} (ETA ~${Math.round(chosen.etaMin)} min)`,
-              },
-              ...prev,
-            ]);
+            // Build the entry NOW. A setState updater runs at render time,
+            // after the ref below has been reassigned — reading the ref inside
+            // it reported every first assignment as a "reassignment".
+            const entry: LiveEvent = {
+              atSec: elapsedSec,
+              kind: currentAssignee.current ? 'reassign' : 'assign',
+              text: currentAssignee.current
+                ? `Pickup reassigned: ${chosen.t.name} → ${target.name}${gain}`
+                : `${chosen.t.name} is picking up ${target.name} (ETA ~${Math.round(chosen.etaMin)} min)`,
+            };
+            setEvents((prev) => [entry, ...prev]);
             currentAssignee.current = chosen.t.id;
           }
           const selfCand = candidates.find((c) => c.t.id === 'self');
@@ -213,6 +208,22 @@ export function useLiveFamily(onPositions: (positions: Record<string, LatLng>) =
       }
       setAssignment(nextAssignment);
 
+      // ── advance the movers ────────────────────────────────────────────
+      const assignee = currentAssignee.current;
+      for (const t of tracks.current) {
+        if (t.needsPickup || t.sheltering) continue;
+        if (t.id === assignee && target) {
+          // The assigned adult drives TOWARD the target, not to safety.
+          if (t.pickupStartKm === undefined) t.pickupStartKm = kmBetween(t.pos, target.pos);
+          t.pos = stepToward(t.pos, target.pos, dtKm);
+        } else if (t.path.length >= 2 && t.distAlongKm < t.totalKm) {
+          // Everyone else follows their own assessed escape route.
+          if (t.pickupStartKm !== undefined) t.pickupStartKm = undefined;
+          t.distAlongKm = Math.min(t.totalKm, t.distAlongKm + dtKm);
+          t.pos = pointAlong(t.path, t.distAlongKm);
+        }
+      }
+
       // ── status lines + pins ───────────────────────────────────────────
       const positions: Record<string, LatLng> = {};
       const nextRows: LiveRow[] = tracks.current.map((t) => {
@@ -235,6 +246,7 @@ export function useLiveFamily(onPositions: (positions: Record<string, LatLng>) =
             id: t.id,
             name: t.name,
             phase: 'pickup',
+            progress: t.pickupStartKm ? Math.min(1, 1 - km / t.pickupStartKm) : 0,
             text:
               km < 0.3
                 ? `At the school with ${target.name}`
@@ -246,6 +258,7 @@ export function useLiveFamily(onPositions: (positions: Record<string, LatLng>) =
           id: t.id,
           name: t.name,
           phase: 'moving',
+          progress: t.totalKm > 0 ? t.distAlongKm / t.totalKm : 0,
           text:
             leftKm <= 0.05
               ? 'Arrived at the evacuation point ✓'

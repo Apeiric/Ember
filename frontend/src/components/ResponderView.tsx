@@ -44,7 +44,7 @@ export function ResponderView() {
 
   return (
     <div className="space-y-3">
-      <div className="rounded-2xl border border-alarm-500/40 bg-alarm-500/10 px-4 py-3">
+      <div className="rounded-xl border border-alarm-500/40 bg-alarm-500/10 px-4 py-3">
         <p className="text-[0.68rem] font-bold uppercase tracking-[0.16em] text-alarm-300">
           Knock order — {data.hazard.name}
         </p>
@@ -86,7 +86,7 @@ function TriageRow({ rank, row }: { rank: number; row: FamilyMemberAssessment })
 
   return (
     <li
-      className={`flex items-stretch overflow-hidden rounded-2xl border ${
+      className={`flex items-stretch overflow-hidden rounded-xl border ${
         cutOff ? 'border-alarm-500/60 bg-alarm-500/[0.08]' : 'border-ash-600 bg-ash-900/95'
       }`}
     >

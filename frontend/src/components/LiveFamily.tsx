@@ -27,7 +27,7 @@ interface Props {
 export function LiveFamily({ running, rows, events, assignment, clockSec, onStart, onStop }: Props) {
   return (
     <section className="panel overflow-hidden">
-      <div className="flex items-center justify-between gap-2 border-b border-ash-600/60 px-4 py-3">
+      <div className="flex items-center justify-between gap-2 border-b border-white/[0.08] px-4 py-3">
         <h2 className="label flex items-center gap-2">
           {running && (
             <span className="relative flex h-2 w-2">
@@ -67,7 +67,7 @@ export function LiveFamily({ running, rows, events, assignment, clockSec, onStar
         <>
           {/* THE decision. If it flips mid-demo, that flip is the product. */}
           {assignment && (
-            <div className="border-b border-ash-600/60 bg-ash-800/60 px-4 py-2.5">
+            <div className="border-b border-white/[0.08] bg-ash-800/60 px-4 py-2.5">
               <p className="text-[0.78rem] leading-snug text-ash-50">
                 <strong className="font-bold">{assignment.assigneeName}</strong>
                 <span className="text-ash-300"> → picking up </span>
@@ -80,25 +80,39 @@ export function LiveFamily({ running, rows, events, assignment, clockSec, onStar
 
           <ul className="divide-y divide-ash-700/50 px-4">
             {rows.map((r) => (
-              <li key={r.id} className="flex items-baseline justify-between gap-3 py-2">
-                <span className="shrink-0 text-[0.78rem] font-semibold text-ash-100">{r.name}</span>
-                <span
-                  className={`min-w-0 truncate text-right text-[0.7rem] ${
-                    r.phase === 'sheltering'
-                      ? 'font-semibold text-alarm-400'
-                      : r.phase === 'arrived'
-                        ? 'font-semibold text-safe-400'
-                        : 'text-ash-300'
-                  }`}
-                >
-                  {r.text}
-                </span>
+              <li key={r.id} className="py-2">
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="shrink-0 text-[0.78rem] font-semibold text-ash-100">
+                    {r.name}
+                  </span>
+                  <span
+                    className={`min-w-0 truncate text-right text-[0.7rem] ${
+                      r.phase === 'sheltering'
+                        ? 'font-semibold text-alarm-400'
+                        : r.phase === 'arrived'
+                          ? 'font-semibold text-safe-400'
+                          : 'text-ash-300'
+                    }`}
+                  >
+                    {r.text}
+                  </span>
+                </div>
+                {r.progress !== undefined && r.progress > 0 && (
+                  <div className="mt-1.5 h-0.5 overflow-hidden rounded-full bg-white/10">
+                    <div
+                      className={`h-full rounded-full transition-[width] duration-500 ${
+                        r.phase === 'pickup' ? 'bg-ash-100' : 'bg-white/40'
+                      }`}
+                      style={{ width: `${Math.round(r.progress * 100)}%` }}
+                    />
+                  </div>
+                )}
               </li>
             ))}
           </ul>
 
           {events.length > 0 && (
-            <div className="border-t border-ash-600/60 px-4 py-2.5">
+            <div className="border-t border-white/[0.08] px-4 py-2.5">
               <p className="text-[0.58rem] font-bold uppercase tracking-[0.16em] text-ash-400">
                 Updates
               </p>

@@ -33,7 +33,7 @@ export function VerdictCard({ verdict, recommended, naive }: Props) {
   return (
     <section
       aria-live="assertive"
-      className={`animate-slam-in overflow-hidden rounded-2xl border ${style.border} ${style.bg} ${
+      className={`animate-slam-in overflow-hidden rounded-xl border ${style.border} ${style.bg} ${
         style.urgent ? 'animate-pulse-alarm' : ''
       }`}
     >

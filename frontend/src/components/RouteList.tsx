@@ -63,7 +63,7 @@ function RouteRow({ scored, isRecommended }: { scored: ScoredRoute; isRecommende
               {scored.rating}
             </span>
             {scored.isNaiveFastest && (
-              <span className="rounded border border-ash-600 bg-ash-800 px-1.5 py-0.5 text-[0.56rem] font-bold uppercase tracking-wider text-ash-300">
+              <span className="rounded border border-white/10 bg-ash-800 px-1.5 py-0.5 text-[0.56rem] font-bold uppercase tracking-wider text-ash-300">
                 Fastest
               </span>
             )}
@@ -106,7 +106,7 @@ function RouteRow({ scored, isRecommended }: { scored: ScoredRoute; isRecommende
       </div>
 
       {scored.reasons.length > 0 && (
-        <ul className="mt-2 space-y-1 border-t border-ash-700/60 pt-2">
+        <ul className="mt-2 space-y-1 border-t border-white/[0.07] pt-2">
           {scored.reasons.map((reason, i) => (
             <li key={i} className="flex gap-2 text-[0.7rem] leading-snug text-ash-400">
               <span className={`mt-1.5 h-1 w-1 shrink-0 rounded-full ${style.dot}`} />

@@ -126,7 +126,7 @@ function ImpactBanner({ impact }: { impact: ReportImpact }) {
  */
 function ReportLog({ reports }: { reports: FieldReport[] }) {
   return (
-    <ul className="mt-3 space-y-2 border-t border-ash-700/60 pt-3">
+    <ul className="mt-3 space-y-2 border-t border-white/[0.07] pt-3">
       {reports.map((report) => (
         <li key={report.id} className="rounded-xl bg-ash-850/60 p-2.5">
           <p className="text-[0.72rem] italic leading-snug text-ash-400">“{report.rawText}”</p>

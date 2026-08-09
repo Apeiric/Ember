@@ -44,7 +44,7 @@ export function RoutePlan({ recommended, tuning, essentials, whyNot }: Props) {
 
   return (
     <section className="panel overflow-hidden">
-      <div className="flex items-baseline justify-between border-b border-ash-600/60 px-4 py-3">
+      <div className="flex items-baseline justify-between border-b border-white/[0.08] px-4 py-3">
         <h2 className="label">The whole plan</h2>
         <span className="text-[0.72rem] font-semibold text-ash-200">
           {Math.round(recommended.route.distanceKm)} km · about {Math.round(arrive)} min door to safe
@@ -103,7 +103,7 @@ export function RoutePlan({ recommended, tuning, essentials, whyNot }: Props) {
       </ol>
 
       {whyNot && (
-        <div className="border-t border-ash-600/60 px-4 py-2.5">
+        <div className="border-t border-white/[0.08] px-4 py-2.5">
           <p className="text-[0.72rem] leading-snug text-ash-200">
             <span className="font-bold uppercase tracking-wide text-ash-300">
               Why not {whyNot.name}?

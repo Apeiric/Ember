@@ -49,7 +49,7 @@ export function TracePanel({ trace }: { trace: Trace }) {
         </span>
       </summary>
 
-      <ul className="space-y-px border-t border-ash-700/60 px-4 py-3">
+      <ul className="space-y-px border-t border-white/[0.07] px-4 py-3">
         {trace.stages.map((stage, i) => {
           const style = STATUS_STYLE[stage.status];
           return (

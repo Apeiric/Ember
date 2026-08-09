@@ -33,6 +33,7 @@ import { AssessingCard } from './components/AssessingCard';
 import { FamilyBoard } from './components/FamilyView';
 import { FieldReportInput } from './components/FieldReportInput';
 import { HazardSummary } from './components/HazardSummary';
+import { IconNavigate, IconPeople, IconShield, IconSliders } from './components/Icons';
 import { Household } from './components/Household';
 import { LiveFamily } from './components/LiveFamily';
 import { MapView } from './components/MapView';
@@ -298,7 +299,7 @@ function EscapeTab({
           )}
 
           {data?.naive?.rating === 'REJECTED' && data.verdict.rejectedSummary && (
-            <div className="rise rounded-2xl border border-alarm-500/50 bg-alarm-500/15 px-4 py-3">
+            <div className="rise rounded-xl border border-alarm-500/50 bg-alarm-500/15 px-4 py-3">
               <p className="text-[0.62rem] font-bold uppercase tracking-[0.14em] text-alarm-300">
                 We did not send you this way
               </p>
@@ -345,7 +346,7 @@ function EscapeTab({
             <button
               type="button"
               onClick={goPeople}
-              className="flex w-full items-center justify-between rounded-2xl border border-ash-600/80 bg-ash-900/95 px-4 py-2.5 text-left transition-colors hover:border-ash-400"
+              className="flex w-full items-center justify-between rounded-xl border border-ash-600/80 bg-ash-900/95 px-4 py-2.5 text-left transition-colors hover:border-ash-400"
             >
               <span className="text-[0.78rem] text-ash-200">
                 Assessing for{' '}
@@ -399,7 +400,7 @@ function EscapeTab({
                   <span className="text-ash-400 transition-transform group-open:rotate-90">›</span>
                 </span>
               </summary>
-              <div className="space-y-3 border-t border-ash-700/60 p-3">
+              <div className="space-y-3 border-t border-white/[0.07] p-3">
                 <HazardSummary data={data} />
                 <RouteList routes={data.routes} recommendedId={data.recommended?.route.id} />
                 <TracePanel trace={data.trace} />
@@ -468,11 +469,11 @@ function FullTab({
   );
 }
 
-const TABS: { id: Tab; label: string; glyph: string }[] = [
-  { id: 'escape', label: 'Escape', glyph: '⬆' },
-  { id: 'people', label: 'People', glyph: '👥' },
-  { id: 'responder', label: 'Responder', glyph: '🚒' },
-  { id: 'settings', label: 'Settings', glyph: '⚙' },
+const TABS: { id: Tab; label: string; Icon: (p: { className?: string }) => JSX.Element }[] = [
+  { id: 'escape', label: 'Escape', Icon: IconNavigate },
+  { id: 'people', label: 'People', Icon: IconPeople },
+  { id: 'responder', label: 'Responder', Icon: IconShield },
+  { id: 'settings', label: 'Settings', Icon: IconSliders },
 ];
 
 function TabBar({
@@ -485,7 +486,7 @@ function TabBar({
   urgent: boolean;
 }) {
   return (
-    <nav className="z-40 shrink-0 border-t border-ash-700/70 bg-ash-950/95 backdrop-blur">
+    <nav className="z-40 shrink-0 border-t border-white/[0.08] bg-ash-950/95 backdrop-blur">
       <div className="mx-auto flex max-w-2xl">
         {TABS.map((t) => {
           const active = tab === t.id;
@@ -503,7 +504,7 @@ function TabBar({
               <span
                 className={`absolute inset-x-6 top-0 h-0.5 rounded-full ${active ? 'bg-ash-100' : 'bg-transparent'}`}
               />
-              <span className="text-base leading-none">{t.glyph}</span>
+              <t.Icon className="h-[18px] w-[18px]" />
               {t.label}
               {t.id === 'escape' && urgent && !active && (
                 <span className="absolute right-1/4 top-1.5 h-2 w-2 animate-pulse rounded-full bg-alarm-500" />
@@ -562,7 +563,7 @@ function Onboard({
           <button
             type="button"
             onClick={() => onDemo(scenarios[0]!.demoAddress, scenarios[0]!.id)}
-            className="rounded-xl border border-ash-600 px-3.5 py-2 text-[0.72rem] font-bold uppercase tracking-wider text-ash-200 transition-colors hover:border-ash-400 hover:text-ash-100"
+            className="rounded-xl border border-white/10 px-3.5 py-2 text-[0.72rem] font-bold uppercase tracking-wider text-ash-200 transition-colors hover:border-ash-400 hover:text-ash-100"
           >
             See the {scenarios[0].name} demo
           </button>

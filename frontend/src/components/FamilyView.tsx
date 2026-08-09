@@ -61,7 +61,7 @@ export function FamilyBoard() {
   return (
     <>
       {/* ── WHAT TO DO FIRST ─────────────────────────────────────────── */}
-      <section className="rounded-2xl border border-ash-600 bg-ash-900 p-4">
+      <section className="rounded-xl border border-white/10 bg-ash-900 p-4">
         <h2 className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-ash-200">
           Do this in order
         </h2>
@@ -98,7 +98,7 @@ function PersonCard({ assessment }: { assessment: FamilyMemberAssessment }) {
   const minutes = verdict.leaveWithinMinutes;
 
   return (
-    <article className="overflow-hidden rounded-2xl border border-ash-700 bg-ash-900/80">
+    <article className="overflow-hidden rounded-xl border border-ash-700 bg-ash-900/80">
       <div className="flex items-stretch">
         {/* Urgency spine — scannable down the left edge. */}
         <div className={`w-1.5 shrink-0 ${style.bar}`} />
@@ -141,7 +141,7 @@ function PersonCard({ assessment }: { assessment: FamilyMemberAssessment }) {
 
           {/* Why this person's answer differs — the accessibility point, stated. */}
           {member.situation && (
-            <p className="mt-2 border-t border-ash-700/60 pt-2 text-[0.68rem] leading-snug text-ash-300">
+            <p className="mt-2 border-t border-white/[0.07] pt-2 text-[0.68rem] leading-snug text-ash-300">
               {member.situation}
             </p>
           )}

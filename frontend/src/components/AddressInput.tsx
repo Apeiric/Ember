@@ -7,6 +7,7 @@
  */
 
 import { useEffect, useState, type FormEvent } from 'react';
+import { IconLocate } from './Icons';
 import type { ScenarioSummary } from '@ember/shared';
 
 interface Props {
@@ -108,12 +109,12 @@ export function AddressInput({ onSubmit, onLocate, loading, initialValue = '', s
             disabled={loading || locating}
             title="Use my location"
             aria-label="Use my location"
-            className="shrink-0 rounded-xl border border-ash-600 bg-ash-850 px-3.5 text-lg transition-colors hover:border-ash-400 hover:text-ash-100 disabled:opacity-40"
+            className="flex shrink-0 items-center rounded-lg border border-white/10 bg-ash-850 px-3.5 text-ash-300 transition-colors hover:border-white/25 hover:text-ash-100 disabled:opacity-40"
           >
             {locating ? (
               <span className="block h-4 w-4 animate-spin rounded-full border-2 border-ash-400/30 border-t-ash-100" />
             ) : (
-              '📍'
+              <IconLocate className="h-[18px] w-[18px]" />
             )}
           </button>
         )}

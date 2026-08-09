@@ -69,7 +69,7 @@ export function VerdictHero({ verdict, recommended, compact = false }: Props) {
   return (
     <section
       aria-live="assertive"
-      className={`animate-slam-in overflow-hidden rounded-3xl ring-1 ${tone.ring} ${tone.bg} ${
+      className={`animate-slam-in overflow-hidden rounded-xl ring-1 ${tone.ring} ${tone.bg} ${
         tone.urgent ? 'animate-pulse-alarm' : ''
       }`}
     >
