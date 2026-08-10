@@ -67,6 +67,13 @@ interface Track {
   hasCar: boolean;
   sheltering: boolean;
   /**
+   * Reduced mobility. Such a person is someone we are trying to GET OUT — not
+   * someone we task with collecting two children. Without this the nearest-car
+   * math cheerfully assigns the 81-year-old on oxygen to the rescue, which is
+   * the exact failure this product exists to prevent.
+   */
+  vulnerable: boolean;
+  /**
    * 'self' is THIS device. The simulation animates everyone else's phone;
    * yours is never simulated — it sits at your address until real
    * watchPosition fixes replace it. A sim that moves "you" while you sit
@@ -117,6 +124,7 @@ export function useLiveFamily(onPositions: (positions: Record<string, LatLng>) =
         id: m.member.id,
         name: m.member.name,
         hasCar: m.member.profile.hasCar,
+        vulnerable: m.member.profile.mobility === 'vulnerable',
         isSelf: m.member.id === 'self',
         sheltering: m.verdict.decision === 'SHELTER_IN_PLACE' && m.member.profile.hasCar,
         needsPickup: !m.member.profile.hasCar,
@@ -147,7 +155,7 @@ export function useLiveFamily(onPositions: (positions: Record<string, LatLng>) =
       let nextAssignment: Assignment | null = null;
       if (target) {
         const candidates = tracks.current
-          .filter((t) => t.hasCar && !t.needsPickup && !t.sheltering)
+          .filter((t) => t.hasCar && !t.needsPickup && !t.sheltering && !t.vulnerable)
           .map((t) => {
             const rawEtaMin = (kmBetween(t.pos, target.pos) / DRIVE_KPH) * 60 + 2;
             return {
