@@ -263,8 +263,140 @@ list."* Judges reward that. Never invent a number.
 
 ---
 
+# DEEP DIVE — for the judging table, not the stage
+
+Use these when you get more than five minutes. Two sentences on stage;
+everything below when someone leans in.
+
+## The four hardest engineering problems
+
+**1. Making the danger field time-aware, not a snapshot.**
+Naively you'd ask "is this point dangerous?" — that's what every hazard map
+does, and it's useless for routing, because you're asking about *now* and
+driving into *later*. We generate nested time rings (0/10/20/30/45/60/90 min)
+from a spread model, each carrying a severity and an arrival time, and the
+engine queries `dangerAt(point, minutesFromNow)`. Every question the system
+asks is indexed by **when**, not just where.
+
+**2. Timing the route correctly.**
+"How far along am I?" is the wrong denominator. A canyon road and a highway
+cover the same distance in wildly different times, so we time each segment
+independently and carry a cumulative clock — your arrival at any point is
+`prep time + travel × your pace multiplier`. The prep time is why Rose's
+verdict inverts: twenty-five minutes of not moving while the fire keeps
+moving.
+
+**3. Making an LLM safe enough to touch a life-or-death system.**
+Our sharpest lesson: Claude extracted "power line across PCH **south**" as a
+danger area, and our first locator saw the word "south" and dropped a 1.2 km
+hazard **on the user's own house**. The fix is architectural, not a better
+prompt: extracted facts are *proposals*, and geometry is the judge. Road names
+are matched against real route segments; direction qualifiers are scoped so
+"the east side of Sunset" can't close the western stretch; anything unmatched
+is shown to the user but never reaches the engine. Fails closed, always.
+
+**4. A demo that cannot lie.**
+Every stage runs a chain — live → cached → canned → mock — each with a
+timeout, and the last link is required never to fail. Every value carries
+provenance, and the UI badges it. The discipline that costs the most: a pinned
+scenario must be canned at *every* stage, because one stage silently going
+live produces a coherent-looking, completely incoherent story.
+
+## The safety architecture (ask us about any of these)
+
+- **Asymmetric failure.** We deliberately over-draw danger. A false "dangerous"
+  costs a detour; a false "safe" costs a life. Every threshold is tuned toward
+  caution, on purpose.
+- **Reports can only add danger.** There is no code path where user input opens
+  a road. Hostile or mistaken input costs you a detour, never a life.
+- **The vulnerable are never volunteered.** The coordination engine will not
+  assign a rescue to someone with reduced mobility — they're who we're trying
+  to get out. (We caught this one *in testing*: it had assigned the
+  eighty-one-year-old on oxygen to collect two children.)
+- **Advisory vs lethal are different types.** An evacuation *order* means
+  "leave", not "this ground is lethal" — treating them the same makes your own
+  doorstep a hazard and returns "shelter in place" to someone who was simply
+  told to evacuate.
+- **We never say "safe".** We say "we refused the road the fire beats you to."
+  Every screen carries the disclaimer that this is a decision aid and emergency
+  services outrank us.
+- **Degradation is visible.** If routing falls back to straight-line bearings,
+  the app says so in words rather than drawing confident lines.
+
+## The business
+
+**Free forever in an emergency.** Charging someone to evacuate is
+indefensible, and we'd rather bind ourselves to that now than discover the
+temptation later.
+
+**Revenue, in order of how believable it is:**
+1. **Counties and state agencies.** They already carry budget for mass
+   alerting. We're the *routing* line item next to the *alerting* line item —
+   and the responder knock list means one purchase serves residents and crews.
+2. **Insurers.** Wildfire is why carriers are leaving California. Life and auto
+   loss reduction, retention, and better catastrophe modelling from real
+   evacuation data.
+3. **Utilities.** They run public-safety power shutoffs and carry ignition
+   liability. Evacuation readiness for customers in their risk zones is
+   liability spend, not marketing spend.
+4. **Households, in peacetime.** Profiles, drills, coordination — the Life360
+   shape, where families already pay for "are my people safe."
+
+**The data flywheel — and the line we won't cross.** Every routed evacuation
+produces something that does not currently exist: *which roads stayed passable,
+at what minute, under what fire behaviour, and how long real people took to
+clear them, by mobility class.* That's ground truth for fire-model validation,
+for insurers' catastrophe models, and for county planners. **Aggregate and
+de-identified only** — precise location is never sold. Life360 built this
+category and then sold location data to brokers; we wrote the opposite into the
+product's own settings page.
+
+## What we'd fix next, in order
+
+1. Real device tracking (`watchPosition`, per-incident opt-in) — the
+   coordination layer is built against exactly this interface today.
+2. An on-device engine — it's pure code with no I/O, so a verdict can survive
+   dead cell towers. That's the version that works when it matters most.
+3. A real fire-spread model (ELMFIRE) behind the existing interface.
+4. Evacuation flow modelling — the queueing failure that actually killed
+   Paradise, and our honest gap today.
+
+---
+
+---
+
+## PREP — the hour before
+
+- **T-45** Submit Devpost (paste from `DEVPOST.md`). Not at the buzzer.
+- **T-35** Record the 60-second backup video of the golden path.
+- **T-25** Full dry run, timed, standing up, all three voices.
+- **T-15** Second dry run. Fix handoffs only, not wording.
+- **T-10** **Freeze.** No commits, no deploys, no "one more fix."
+- **T-5** Load the live URL, click **Palisades Fire** once so the instance is
+  warm, leave it on **Escape**.
+
+**Rehearsal method:** each person rehearses **only their own segment**, out
+loud, five times alone — then three full run-throughs together. Record the
+third on a phone and watch it back. You are checking three things: did it fit
+3:00, did the handoffs land, did anyone talk over anyone.
+
+## ON THE DAY — non-negotiables
+
+1. **Demo with the "Palisades Fire" chip, never a typed address.** The chip
+   uses baked road geometry: it cannot cross water and cannot be broken by
+   wifi, a quota, or an API key.
+2. **Backups in order:** live site → localhost in tab two → 60-second recording
+   in tab three. If something stalls, B switches tabs and keeps talking.
+   **Never debug on stage.**
+3. **Sources tab open** during Q&A (list at the end of this file). Name the
+   source out loud — "NIST found…" — it converts a claim into evidence.
+4. Whoever is not speaking **does not talk.**
+
+---
+
 ## THE THREE THINGS THAT MUST LAND
 
 1. **"Every map assumes the world is standing still. A fire moves."**
-2. **"Twelve of seventeen civilian burnovers in Paradise happened on major evacuation roadways."**
-3. **"Same fire, same street, different person, opposite answer."**
+2. **"Twelve of seventeen civilian burnovers in Paradise happened on major
+   evacuation roadways."** — people died on the roads they were told to take.
+3. **"Same fire, same street, different person, opposite answer."** — Rose.
