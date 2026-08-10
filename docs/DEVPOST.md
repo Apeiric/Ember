@@ -11,7 +11,7 @@ Ember
 ## Elevator pitch (200 char limit — this is 168)
 
 ```
-Everyone tells you a fire exists. Ember tells you the safe way out — routing by where the fire will BE when you arrive, personalized to how fast you can actually move.
+Maps route you through the world as it is. Ember routes you through the world as it will be — racing the fire's arrival against yours on every road, at your speed.
 ```
 
 ---
@@ -46,10 +46,14 @@ So we built the missing layer.
 
 ## What it does
 
-Ember answers one question no other product answers:
+**Every navigation app assumes the map is standing still.** In a wildfire the
+map is moving — and that assumption kills people.
 
-> **"Where will the fire be when I get there — and how fast can THIS person
-> actually move?"**
+Ember is a routing engine that treats the map as moving. It computes where the
+fire will be minute by minute, then on every road runs a race: *the fire's
+arrival time against yours.* Lose that race and the road is refused, no matter
+how fast it is. And "yours" is literal — someone who needs twenty-five minutes
+to get out the door is running a different race on the same road.
 
 For every candidate escape route, for every point along it, Ember computes two
 numbers: when *you* arrive, and when the *danger* arrives. The gap between
