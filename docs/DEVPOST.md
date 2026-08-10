@@ -33,8 +33,15 @@ During the January 2025 Palisades Fire, people did what everyone does — they
 opened their phone. Their phone told them a fire existed and offered the
 fastest route to the freeway. That route was Sunset Boulevard eastbound, and
 cars ended up abandoned on it while a bulldozer cleared a path through them.
-In Paradise in 2018, 85 people died, many of them on or beside evacuation
-roads.
+And this had happened before. In 2017, Waze routed drivers *toward* the
+Skirball Fire — because those streets were empty, and empty reads as fast to a
+routing engine. They were empty because people had already fled them; the LAPD
+had to publicly warn drivers to stop using navigation apps to escape.
+
+In Paradise in 2018, 85 people died. NIST's case study of that fire identified
+17 burnover events that caught evacuating civilians — **12 of them on major
+evacuation roadways.** Most of the dead were older residents whose
+circumstances prevented them from evacuating in time.
 
 Those people weren't uninformed. They were *misinformed by tools optimizing
 for the wrong thing.* An alert tells you a fire exists. A navigation app tells
