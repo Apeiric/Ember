@@ -298,6 +298,24 @@ function EscapeTab({
             </div>
           )}
 
+          {/* Routing degraded to synthetic corridors — those are bearings, not
+              roads, and they can cross water. Never let that pass silently. */}
+          {data?.trace.stages.some(
+            (st) => st.name === 'routing' && (st.source === 'mock' || st.status === 'fallback'),
+          ) && (
+            <div className="rise relative overflow-hidden rounded-xl border border-white/[0.08] bg-ash-900/95 px-4 py-3 pl-5">
+              <span className="absolute inset-y-0 left-0 w-[3px] bg-caution-400" />
+              <p className="text-[0.62rem] font-bold uppercase tracking-[0.14em] text-caution-400">
+                Road data unavailable
+              </p>
+              <p className="mt-1 text-[0.82rem] leading-snug text-ash-100">
+                The routing provider did not answer, so these are straight-line
+                bearings — not real roads. Directions and distances are indicative
+                only. Use a pinned scenario for a road-accurate demo.
+              </p>
+            </div>
+          )}
+
           {data?.naive?.rating === 'REJECTED' && data.verdict.rejectedSummary && (
             <div className="rise relative overflow-hidden rounded-xl border border-white/[0.08] bg-ash-900/95 px-4 py-3 pl-5">
               <span className="absolute inset-y-0 left-0 w-[3px] bg-alarm-500" />
@@ -323,7 +341,7 @@ function EscapeTab({
           )}
 
 
-          {data && scenarioId === 'palisades-2025' && (
+          {data && (
             <LiveFamily
               running={live.running}
               rows={live.rows}
